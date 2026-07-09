@@ -37,11 +37,6 @@ export async function fetchSite(input, opts = {}) {
     const body = await res.text();
     const elapsedMs = Math.round(nowMs() - startedAt);
 
-    // TODO: temporary debug while wiring the analyzers; strip before release
-    if (process.env.SS_DEBUG) {
-      console.error(`[fetch] ${res.status} ${res.url || requestedUrl} (${elapsedMs}ms)`);
-    }
-
     // flatten headers to a plain object; node has getSetCookie() for the combined set-cookie
     const headers = {};
     for (const [k, v] of res.headers.entries()) {
