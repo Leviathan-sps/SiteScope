@@ -1,15 +1,6 @@
 // http header analysis: grades security headers, flags missing ones, and
 // surfaces caching / compression info
 
-// old letter-grade thresholds; scoring moved to weighted points below
-const GRADE_BANDS = [
-  { min: 90, grade: "A" },
-  { min: 75, grade: "B" },
-  { min: 60, grade: "C" },
-  { min: 40, grade: "D" },
-  { min: 0, grade: "F" },
-];
-
 // security headers we grade. check() returns null if ok, or a warning string
 const SECURITY_HEADERS = [
   {
