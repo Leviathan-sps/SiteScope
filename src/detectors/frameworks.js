@@ -2,13 +2,6 @@
 // each signature is a list of regexes; any match adds the tech with a
 // confidence and the evidence that triggered it. no external requests.
 
-// legacy flat hints from the first prototype; the SIGNATURES table replaced these
-const LEGACY_HINTS = {
-  wordpress: /wp-content|wp-includes/i,
-  drupal: /sites\/(all|default)\/(themes|modules)/i,
-  joomla: /\/media\/jui\/|Joomla!/i,
-};
-
 const SIGNATURES = [
   // ---- meta frameworks (check before their base library so we can note both) ----
   {
