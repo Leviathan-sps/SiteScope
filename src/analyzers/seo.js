@@ -1,13 +1,6 @@
 // seo / metadata analysis. pulls common on-page signals out of the html
 // with lightweight regex parsing (no dom dependency) and runs basic checks
 
-// first pass used a naive whole-html title grab; kept until the head-scoped
-// extractor is proven out on more pages
-// function rawTitle(html) {
-//   const m = html.match(/<title>(.*?)<\/title>/i);
-//   return m ? m[1].trim() : "";
-// }
-
 // extract on-page seo signals and run the checks
 export function analyzeSeo(site) {
   const html = site.body || "";
