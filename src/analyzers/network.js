@@ -4,14 +4,6 @@
 // third-party, and group by host. { probe: true } issues head requests
 // for accurate sizes/status
 
-// scratch: was going to batch probes with this; probeLimit covers it for now
-const MAX_INFLIGHT = 6;
-function chunk(arr, n) {
-  const out = [];
-  for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
-  return out;
-}
-
 // extract and classify every sub-resource referenced by the page
 export async function analyzeNetwork(site, opts = {}) {
   const { probe = false, probeLimit = 25, timeout = 8000 } = opts;
