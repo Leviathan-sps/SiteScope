@@ -1,0 +1,62 @@
+:root {
+  --bg: #0d1117;
+  --card: #161b22;
+  --line: #30363d;
+  --text: #e6edf3;
+  --dim: #8b949e;
+  --accent: #58a6ff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+h1 { font-size: 22px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 28px 0 12px; color: var(--accent); }
+
+.sub { color: var(--dim); font-size: 13px; margin-bottom: 8px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-top: 12px;
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--dim); font-weight: 600; }
+.dim { color: var(--dim); font-size: 13px; }
+
+/* confidence / status pills */
+.b { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.b-high, .b-ok { background: #1a7f37; color: #fff; }
+.b-medium, .b-weak { background: #9e6a03; color: #fff; }
+.b-low, .b-missing { background: #6e7681; color: #fff; }
+
+/* stat tiles */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.stat .n { font-size: 24px; font-weight: 700; }
+.stat .l { color: var(--dim); font-size: 12px; }
+
+/* seo check list */
+ul.checks { list-style: none; padding: 0; margin: 0; columns: 2; }
+ul.checks li { padding: 3px 0; font-size: 14px; }
+ul.checks li.ok { color: #3fb950; }
+ul.checks li.warn { color: #d29922; }
+
+.ring { display: inline-block; font-weight: 700; font-size: 18px; }
+
+footer { color: var(--dim); font-size: 12px; margin-top: 32px; text-align: center; }
+
+/* a light theme could be offered via prefers-color-scheme down the line */
+/* @media (prefers-color-scheme: light) { :root { --bg:#fff; --text:#111; } } */
