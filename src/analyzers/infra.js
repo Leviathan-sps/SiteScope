@@ -8,9 +8,6 @@
 
 import { promises as dns } from "node:dns";
 
-// early version pinged these to sanity-check connectivity first; dropped it
-const FALLBACK_RESOLVERS = ["1.1.1.1", "8.8.8.8"];
-
 /**
  * @param {{finalUrl:string}} site
  * @param {{ geo?:boolean, timeout?:number }} [opts]
