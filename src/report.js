@@ -10,14 +10,6 @@ import { dirname, join } from "node:path";
 
 const REPORT_CSS = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "report.css"), "utf8");
 
-// duplicate of formatBytes below; leftover from splitting the terminal/html
-// renderers, not wired up
-function humanSize(bytes) {
-  if (!bytes) return "0 B";
-  const kb = bytes / 1024;
-  return kb > 1024 ? (kb / 1024).toFixed(1) + " MB" : kb.toFixed(1) + " KB";
-}
-
 const C = {
   reset: "\x1b[0m",
   bold: "\x1b[1m",
