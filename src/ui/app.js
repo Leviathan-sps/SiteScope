@@ -5,12 +5,6 @@
 const $ = (id) => document.getElementById(id);
 const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 
-// unused: inline status helper from before the error banner existed
-function flash(msg) {
-  const n = $("status");
-  if (n) n.textContent = msg;
-}
-
 const state = { report: null, loading: false, error: null };
 
 let history = [];
