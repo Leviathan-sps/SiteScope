@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SiteScope</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="brand">
+    <img class="scope" src="/favicon.svg" alt="SiteScope logo" width="24" height="24">
+    <span class="name">SiteScope</span>
+    <span class="tagline">Detailed scanner</span>
+  </div>
+  <form id="scan-form">
+    <input id="url-input" type="text" list="history" placeholder="example.com — or paste any URL"
+           autocomplete="off" spellcheck="false" autofocus>
+    <datalist id="history"></datalist>
+    <label class="probe" title="HEAD-request each resource for real sizes and status codes (slower)">
+      <input type="checkbox" id="probe-input"> probe sizes
+    </label>
+    <label class="probe" title="Active scan: connect to common ports and probe common paths. Only for sites you own or are authorized to test.">
+      <input type="checkbox" id="recon-input"> deep scan
+    </label>
+    <button type="submit" id="scan-btn">Scan</button>
+  </form>
+  <div class="downloads" id="downloads" hidden>
+    save as
+    <button type="button" data-dl="html">HTML</button> ·
+    <button type="button" data-dl="md">Markdown</button> ·
+    <button type="button" data-dl="json">JSON</button>
+  </div>
+</header>
+
+<nav id="nav" hidden>
+  <a href="#/overview" data-page="overview">Overview</a>
+  <a href="#/technologies" data-page="technologies">Technologies</a>
+  <a href="#/infrastructure" data-page="infrastructure">Infrastructure</a>
+  <a href="#/security" data-page="security">Security</a>
+  <a href="#/cookies" data-page="cookies">Cookies</a>
+  <a href="#/seo" data-page="seo">SEO</a>
+  <a href="#/network" data-page="network">Network</a>
+</nav>
+
+<main id="main"></main>
+
+<footer>
+  SiteScope reads one server-rendered fetch — what a crawler sees, no JavaScript executed.
+  Client-only SPAs will show fewer signals than they deserve.
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

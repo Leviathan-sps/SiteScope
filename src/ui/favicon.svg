@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SiteScope">
+  <rect width="64" height="64" rx="13" fill="#1d4ed8"/>
+  <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- tripod legs -->
+    <path d="M31 34 L24 52 M31 34 L38 52 M31 36 L31 50" stroke="#8fb0ff" stroke-width="3.4"/>
+    <!-- telescope tube -->
+    <line x1="18" y1="44" x2="45" y2="21" stroke="#e3ecff" stroke-width="10"/>
+    <!-- eyepiece end -->
+    <line x1="15" y1="47" x2="21" y2="42" stroke="#8fb0ff" stroke-width="6"/>
+  </g>
+  <!-- star being observed -->
+  <circle cx="47" cy="18" r="3.2" fill="#ffd84d"/>
+</svg>
