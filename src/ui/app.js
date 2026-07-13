@@ -95,6 +95,7 @@ const PAGES = {
   cookies: pageCookies,
   seo: pageSeo,
   network: pageNetwork,
+  performance: pagePerformance,
   crawlability: pageCrawlability,
 };
 
@@ -372,6 +373,37 @@ function pageNetwork(r) {
     <div class="card"><h2>By type</h2><table><thead><tr><th>Type</th><th class="num">Count</th></tr></thead><tbody>${typeRows}</tbody></table></div>
     <div class="card"><h2>By host <span class="hint">(top 12)</span></h2><table><thead><tr><th>Host</th><th>Party</th><th class="num">Count</th></tr></thead><tbody>${hostRows}</tbody></table></div>
     ${n.probed ? `<div class="notice">Probed ${n.probed.sampled} resources with HEAD requests for real sizes and status.</div>` : `<div class="notice">Tip: enable “probe sizes” to HEAD-request each resource for real byte sizes and status codes.</div>`}`;
+  return wrap;
+}
+
+function pagePerformance(r) {
+  const wrap = document.createElement("div");
+  const p = r.performance;
+  const checks = p.checks.map((c) => `<li class="${c.pass ? "pass" : "flag"}">${esc(c.label)}</li>`).join("");
+  const byteRows = p.bytes
+    ? Object.entries(p.bytes.byType).map(([t, n]) => `<tr><td>${esc(t)}</td><td class="num">${fmtBytes(n)}</td></tr>`).join("")
+    : "";
+  wrap.innerHTML =
+    head("Performance budget", "Static checks against the resource map — no headless browser, so these are rule-of-thumb budgets rather than real load timing.") +
+    `<div class="card ${scoreClass(p.score) === "good" ? "ok" : scoreClass(p.score) === "mid" ? "warn" : "bad"}">
+      <h2>${p.score}/100</h2>
+      <div class="meter"><i class="${scoreClass(p.score)}" style="width:${p.score}%"></i></div>
+    </div>
+    <div class="card">
+      <h2>Budget</h2>
+      <dl class="kv">
+        <dt>Requests</dt><dd>${p.requests}</dd>
+        <dt>Scripts</dt><dd>${p.jsCount}</dd>
+        <dt>Stylesheets</dt><dd>${p.cssCount}</dd>
+        <dt>Images</dt><dd>${p.imageCount}</dd>
+        <dt>Fonts</dt><dd>${p.fontCount}</dd>
+        <dt>Third-party hosts</dt><dd>${p.thirdPartyHosts}</dd>
+        <dt>Render-blocking scripts</dt><dd>${p.renderBlockingScripts}</dd>
+        ${p.bytes ? `<dt>Total weight</dt><dd>${fmtBytes(p.bytes.total)}</dd>` : ""}
+      </dl>
+    </div>
+    ${p.bytes ? `<div class="card"><h2>Weight by type</h2><table><thead><tr><th>Type</th><th class="num">Bytes</th></tr></thead><tbody>${byteRows}</tbody></table></div>` : `<div class="notice">Tip: enable "probe sizes" before scanning to get real byte-weight budgets, not just resource counts.</div>`}
+    <div class="card"><h2>Checks</h2><ul class="checks">${checks}</ul></div>`;
   return wrap;
 }
 

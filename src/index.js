@@ -9,6 +9,7 @@ import { analyzeSeo } from "./analyzers/seo.js";
 import { analyzeNetwork } from "./analyzers/network.js";
 import { analyzeInfra } from "./analyzers/infra.js";
 import { analyzeCrawl } from "./analyzers/crawl.js";
+import { analyzePerformance } from "./analyzers/performance.js";
 import { scanPorts } from "./analyzers/ports.js";
 import { scanPaths } from "./analyzers/paths.js";
 
@@ -23,6 +24,8 @@ export async function analyze(url, opts = {}) {
     analyzeInfra(site, { geo: opts.geo !== false }),
     analyzeCrawl(site, { timeout: opts.timeout }),
   ]);
+
+  const performance = analyzePerformance(site, network);
 
   // active recon (ports + paths) is opt-in — it sends real traffic
   let recon = null;
@@ -52,6 +55,7 @@ export async function analyze(url, opts = {}) {
     headers: analyzeHeaders(site),
     cookies: analyzeCookies(site),
     seo: analyzeSeo(site),
+    performance,
     crawl,
     network,
     infra,

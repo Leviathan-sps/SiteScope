@@ -129,6 +129,16 @@ export function renderTerminal(report, { color: useColor = true } = {}) {
   const topHosts = Object.entries(report.network.byHost).slice(0, 5);
   for (const [host, n] of topHosts) lines.push(`  ${c.gray}${String(n).padStart(3)}× ${host}${c.reset}`);
 
+  if (report.performance) {
+    const p = report.performance;
+    h(`⚡ Performance budget  ${scoreColor(c, p.score)} ${p.score}/100`);
+    kv("Requests", String(p.requests));
+    kv("Scripts / styles", `${p.jsCount} / ${p.cssCount}`);
+    kv("Third-party hosts", String(p.thirdPartyHosts));
+    if (p.bytes) kv("Total weight", formatBytes(p.bytes.total));
+    for (const ch of p.checks.filter((c2) => !c2.pass)) lines.push(`  ${c.yellow}▲ ${ch.label}${c.reset}`);
+  }
+
   if (report.crawl) {
     const cr = report.crawl;
     h(`🤖 Crawlability  ${scoreColor(c, cr.score)} ${cr.score}/100`);
@@ -241,6 +251,20 @@ export function renderMarkdown(report) {
   if (report.network.thirdPartyHosts.length) L.push(`- Third-party hosts: ${report.network.thirdPartyHosts.map((h) => `\`${h}\``).join(", ")}`);
   L.push("");
 
+  if (report.performance) {
+    const p = report.performance;
+    L.push(`## ⚡ Performance budget — ${p.score}/100`);
+    L.push(`- Requests: **${p.requests}** · Scripts: **${p.jsCount}** · Stylesheets: **${p.cssCount}** · Third-party hosts: **${p.thirdPartyHosts}**`);
+    if (p.bytes) L.push(`- Total weight: **${formatBytes(p.bytes.total)}**`);
+    const failed = p.checks.filter((c) => !c.pass);
+    if (failed.length) {
+      L.push("");
+      L.push("**Issues:**");
+      for (const ch of failed) L.push(`- ⚠️ ${ch.label}`);
+    }
+    L.push("");
+  }
+
   if (report.crawl) {
     const cr = report.crawl;
     L.push(`## 🤖 Crawlability — ${cr.score}/100`);
@@ -312,6 +336,14 @@ export function renderHtml(report) {
     ${rec.paths.present.map((r) => `<tr><td>${r.status}</td><td>${esc(r.path)}</td><td class="dim">${esc(r.kind)}${r.kind === "sensitive" && r.status < 400 ? " ❌" : ""}</td></tr>`).join("") || '<tr><td class="dim" colspan=3>None reachable</td></tr>'}
   </table></div>` : "";
 
+  const perf = report.performance;
+  const perfSection = perf ? `
+  <h2>⚡ Performance budget — ${perf.score}/100</h2>
+  <div class="card">
+    <p class="dim">Requests: ${perf.requests} · Scripts: ${perf.jsCount} · Stylesheets: ${perf.cssCount} · Third-party hosts: ${perf.thirdPartyHosts}${perf.bytes ? ` · Total weight: ${esc(formatBytes(perf.bytes.total))}` : ""}</p>
+    <ul class="checks">${perf.checks.map((ch) => `<li class="${ch.pass ? "ok" : "warn"}">${ch.pass ? "✓" : "▲"} ${esc(ch.label)}</li>`).join("")}</ul>
+  </div>` : "";
+
   const cr = report.crawl;
   const crawlSection = cr ? `
   <h2>🤖 Crawlability — ${cr.score}/100</h2>
@@ -358,6 +390,7 @@ ${REPORT_CSS}</style></head>
     <p class="dim">First-party: ${report.network.firstParty} · Third-party: ${report.network.thirdParty} from ${report.network.thirdPartyHosts.length} hosts</p>
     <table><tr><th>Type</th><th>Count</th></tr>${typeRows}</table>
   </div>
+  ${perfSection}
   ${crawlSection}
   ${infraSection}
   ${portsSection}
