@@ -149,7 +149,8 @@ function renderLanding() {
 
 // ---------- helpers ----------
 
-const scoreClass = (n) => (n >= 80 ? "good" : n >= 60 ? "mid" : "poor");
+// color bands, kept a touch generous so a decent score still reads green
+const scoreClass = (n) => (n >= 70 ? "good" : n >= 45 ? "mid" : "poor");
 const gradeGood = (g) => (g === "A" || g === "B" ? "good" : g === "C" ? "mid" : "poor");
 function head(title, lead) { return `<div class="page-head"><h1>${esc(title)}</h1><p class="lead">${esc(lead)}</p></div>`; }
 function fmtBytes(n) {

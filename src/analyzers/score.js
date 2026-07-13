@@ -52,10 +52,11 @@ function collectTopIssues({ headers, seo, cookies, performance, crawl }) {
   return issues.sort((a, b) => b.severity - a.severity).slice(0, 8);
 }
 
+// lenient curve — keep this in step with the one in headers.js
 function letterGrade(score) {
-  if (score >= 90) return "A";
-  if (score >= 75) return "B";
-  if (score >= 60) return "C";
-  if (score >= 40) return "D";
+  if (score >= 80) return "A";
+  if (score >= 65) return "B";
+  if (score >= 50) return "C";
+  if (score >= 35) return "D";
   return "F";
 }
