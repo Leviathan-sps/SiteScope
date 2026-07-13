@@ -95,6 +95,7 @@ const PAGES = {
   cookies: pageCookies,
   seo: pageSeo,
   network: pageNetwork,
+  crawlability: pageCrawlability,
 };
 
 window.addEventListener("hashchange", render);
@@ -371,6 +372,41 @@ function pageNetwork(r) {
     <div class="card"><h2>By type</h2><table><thead><tr><th>Type</th><th class="num">Count</th></tr></thead><tbody>${typeRows}</tbody></table></div>
     <div class="card"><h2>By host <span class="hint">(top 12)</span></h2><table><thead><tr><th>Host</th><th>Party</th><th class="num">Count</th></tr></thead><tbody>${hostRows}</tbody></table></div>
     ${n.probed ? `<div class="notice">Probed ${n.probed.sampled} resources with HEAD requests for real sizes and status.</div>` : `<div class="notice">Tip: enable “probe sizes” to HEAD-request each resource for real byte sizes and status codes.</div>`}`;
+  return wrap;
+}
+
+function pageCrawlability(r) {
+  const wrap = document.createElement("div");
+  const cr = r.crawl;
+  const checks = cr.checks.map((c) => `<li class="${c.pass ? "pass" : "flag"}">${esc(c.label)}</li>`).join("");
+  wrap.innerHTML =
+    head("Crawlability", "Whether robots.txt and a sitemap exist, and whether the page just scanned is actually allowed to be crawled.") +
+    `<div class="card ${scoreClass(cr.score) === "good" ? "ok" : scoreClass(cr.score) === "mid" ? "warn" : "bad"}">
+      <h2>${cr.score}/100</h2>
+      <div class="meter"><i class="${scoreClass(cr.score)}" style="width:${cr.score}%"></i></div>
+    </div>
+    <div class="card">
+      <h2>robots.txt</h2>
+      <dl class="kv">
+        <dt>Found</dt><dd>${cr.robotsTxt.present ? '<span class="chip ok">yes</span>' : '<span class="chip bad">no</span>'}</dd>
+        ${cr.robotsTxt.present ? `
+        <dt>Blocks entire site</dt><dd>${cr.robotsTxt.disallowsAll ? '<span class="chip bad">yes</span>' : '<span class="chip ok">no</span>'}</dd>
+        <dt>Scanned page allowed</dt><dd>${cr.robotsTxt.currentPathDisallowed ? '<span class="chip bad">no</span>' : '<span class="chip ok">yes</span>'}</dd>
+        <dt>Declared sitemaps</dt><dd>${cr.robotsTxt.sitemaps.length}</dd>` : ""}
+      </dl>
+    </div>
+    <div class="card">
+      <h2>Sitemap</h2>
+      <dl class="kv">
+        <dt>Found</dt><dd>${cr.sitemap.present ? '<span class="chip ok">yes</span>' : '<span class="chip bad">no</span>'}</dd>
+        ${cr.sitemap.present ? `
+        <dt>URL</dt><dd class="mono">${esc(cr.sitemap.url)}</dd>
+        <dt>Type</dt><dd>${cr.sitemap.isIndex ? "sitemap index" : "urlset"}</dd>
+        <dt>${cr.sitemap.isIndex ? "Child sitemaps" : "URLs listed"}</dt><dd>${cr.sitemap.urlCount ?? "—"}</dd>
+        ${cr.sitemap.isIndex ? `<dt>Sampled URLs (first child)</dt><dd>${cr.sitemap.sampledChildUrlCount ?? "—"}</dd>` : ""}` : ""}
+      </dl>
+    </div>
+    <div class="card"><h2>Checks</h2><ul class="checks">${checks}</ul></div>`;
   return wrap;
 }
 
