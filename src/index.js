@@ -10,6 +10,7 @@ import { analyzeNetwork } from "./analyzers/network.js";
 import { analyzeInfra } from "./analyzers/infra.js";
 import { analyzeCrawl } from "./analyzers/crawl.js";
 import { analyzePerformance } from "./analyzers/performance.js";
+import { analyzeScore } from "./analyzers/score.js";
 import { scanPorts } from "./analyzers/ports.js";
 import { scanPaths } from "./analyzers/paths.js";
 
@@ -25,7 +26,11 @@ export async function analyze(url, opts = {}) {
     analyzeCrawl(site, { timeout: opts.timeout }),
   ]);
 
+  const headers = analyzeHeaders(site);
+  const cookies = analyzeCookies(site);
+  const seo = analyzeSeo(site);
   const performance = analyzePerformance(site, network);
+  const score = analyzeScore({ headers, seo, cookies, performance, crawl });
 
   // active recon (ports + paths) is opt-in — it sends real traffic
   let recon = null;
@@ -52,15 +57,14 @@ export async function analyze(url, opts = {}) {
       generatedAt: opts.generatedAt || new Date().toISOString(),
     },
     frameworks: detectFrameworks(site),
-    headers: analyzeHeaders(site),
-    cookies: analyzeCookies(site),
-    seo: analyzeSeo(site),
+    headers,
+    cookies,
+    seo,
     performance,
     crawl,
     network,
     infra,
     recon,
-    // could roll everything into a single 0-100 health score down the line
-    // score: overallScore({ headers, seo, cookies }),
+    score,
   };
 }

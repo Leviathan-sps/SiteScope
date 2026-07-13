@@ -165,15 +165,24 @@ function pageOverview(r) {
   const wrap = document.createElement("div");
   const secGrade = r.headers.grade;
   const cookieFlags = r.cookies.issues.length;
+  const score = r.score;
   wrap.innerHTML =
     head("Overview", `${r.meta.finalUrl} — status ${r.meta.status}, ${fmtBytes(r.meta.bytes)}, ${r.meta.elapsedMs}ms${r.meta.redirected ? ", redirected" : ""}.`) +
     `<div class="tiles">
+      ${score && score.score != null ? `<div class="tile grade-${String(score.grade).toLowerCase()}"><div class="n">${esc(score.grade)}</div><div class="l">overall health (${score.score}/100)</div></div>` : ""}
       <a class="tile" href="#/technologies"><div class="n">${r.frameworks.length}</div><div class="l">technologies</div></a>
       <a class="tile grade-${secGrade.toLowerCase()}" href="#/security"><div class="n">${esc(secGrade)}</div><div class="l">security grade</div></a>
       <a class="tile" href="#/cookies"><div class="n ${cookieFlags ? "mid" : "good"}">${r.cookies.count}</div><div class="l">cookies${cookieFlags ? ` · ${cookieFlags} flags` : ""}</div></a>
       <a class="tile" href="#/seo"><div class="n ${scoreClass(r.seo.score)}">${r.seo.score}</div><div class="l">SEO score</div></a>
       <a class="tile" href="#/network"><div class="n">${r.network.total}</div><div class="l">resources</div></a>
+      ${r.performance ? `<a class="tile" href="#/performance"><div class="n ${scoreClass(r.performance.score)}">${r.performance.score}</div><div class="l">performance</div></a>` : ""}
+      ${r.crawl ? `<a class="tile" href="#/crawlability"><div class="n ${scoreClass(r.crawl.score)}">${r.crawl.score}</div><div class="l">crawlability</div></a>` : ""}
     </div>
+    ${score && score.topIssues.length ? `
+    <div class="card warn">
+      <h2>Top issues</h2>
+      <ul class="checks">${score.topIssues.map((i) => `<li class="flag">[${esc(i.source)}] ${esc(i.label)}</li>`).join("")}</ul>
+    </div>` : ""}
     <div class="card accent">
       <h2>At a glance</h2>
       <dl class="kv">

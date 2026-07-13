@@ -44,6 +44,10 @@ export function renderTerminal(report, { color: useColor = true } = {}) {
     `${c.gray}status ${statusColor(c, report.meta.status)} · ${report.meta.bytes} bytes · ${report.meta.elapsedMs}ms${report.meta.redirected ? " · redirected" : ""}${c.reset}`
   );
 
+  if (report.score && report.score.score != null) {
+    lines.push(`${c.bold}Overall health  ${c.reset}${gradeColor(c, report.score.grade)} ${report.score.grade} (${report.score.score}/100)${c.reset}`);
+  }
+
   h("⚙  Technologies");
   if (!report.frameworks.length) lines.push(`  ${c.gray}none detected${c.reset}`);
   for (const f of report.frameworks) {
@@ -162,6 +166,16 @@ export function renderMarkdown(report) {
   L.push("");
   L.push(`> status \`${report.meta.status}\` · ${report.meta.bytes} bytes · ${report.meta.elapsedMs}ms · generated ${report.meta.generatedAt}`);
   L.push("");
+
+  if (report.score && report.score.score != null) {
+    L.push(`## Overall health — ${report.score.grade} (${report.score.score}/100)`);
+    if (report.score.topIssues.length) {
+      L.push("");
+      L.push("**Top issues:**");
+      for (const i of report.score.topIssues) L.push(`- [${i.source}] ${i.label}`);
+    }
+    L.push("");
+  }
 
   L.push("## ⚙️ Technologies");
   if (!report.frameworks.length) L.push("_None detected._");
@@ -352,6 +366,11 @@ export function renderHtml(report) {
     <ul class="checks">${cr.checks.map((ch) => `<li class="${ch.pass ? "ok" : "warn"}">${ch.pass ? "✓" : "▲"} ${esc(ch.label)}</li>`).join("")}</ul>
   </div>` : "";
 
+  const score = report.score;
+  const topIssuesSection = score && score.topIssues.length ? `
+  <h2>🚩 Top issues</h2>
+  <div class="card"><ul class="checks">${score.topIssues.map((i) => `<li class="warn">▲ <b>[${esc(i.source)}]</b> ${esc(i.label)}</li>`).join("")}</ul></div>` : "";
+
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SiteScope — ${esc(report.meta.finalUrl)}</title>
@@ -363,12 +382,14 @@ ${REPORT_CSS}</style></head>
   <div class="sub">${esc(report.meta.finalUrl)} · status ${esc(report.meta.status)} · ${report.meta.bytes} bytes · ${report.meta.elapsedMs}ms · ${esc(report.meta.generatedAt)}</div>
 
   <div class="grid">
+    ${score && score.score != null ? `<div class="stat"><div class="n">${esc(score.grade)}</div><div class="l">overall health (${score.score}/100)</div></div>` : ""}
     <div class="stat"><div class="n">${report.frameworks.length}</div><div class="l">technologies</div></div>
     <div class="stat"><div class="n">${esc(report.headers.grade)}</div><div class="l">security grade</div></div>
     <div class="stat"><div class="n">${report.seo.score}</div><div class="l">SEO score</div></div>
     <div class="stat"><div class="n">${report.network.total}</div><div class="l">resources</div></div>
     <div class="stat"><div class="n">${report.cookies.count}</div><div class="l">cookies</div></div>
   </div>
+  ${topIssuesSection}
 
   <h2>⚙️ Technologies</h2>
   <div class="card"><table><tr><th>Technology</th><th>Version</th><th>Category</th><th>Confidence</th><th>Evidence</th></tr>${techRows || '<tr><td class="dim" colspan=5>None detected</td></tr>'}</table></div>

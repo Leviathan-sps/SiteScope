@@ -1,39 +1,89 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SiteScope — https://vercel.com/</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%231d4ed8'/%3E%3Cg stroke-linecap='round' stroke-linejoin='round' fill='none'%3E%3Cpath d='M31 34 L24 52 M31 34 L38 52 M31 36 L31 50' stroke='%238fb0ff' stroke-width='3.4'/%3E%3Cline x1='18' y1='44' x2='45' y2='21' stroke='%23e3ecff' stroke-width='10'/%3E%3Cline x1='15' y1='47' x2='21' y2='42' stroke='%238fb0ff' stroke-width='6'/%3E%3C/g%3E%3Ccircle cx='47' cy='18' r='3.2' fill='%23ffd84d'/%3E%3C/svg%3E">
 <style>
-  :root{--bg:#0d1117;--card:#161b22;--line:#30363d;--text:#e6edf3;--dim:#8b949e;--accent:#58a6ff}
-  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif}
-  .wrap{max-width:960px;margin:0 auto;padding:32px 20px}
-  h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 12px;color:var(--accent)}
-  .sub{color:var(--dim);font-size:13px;margin-bottom:8px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-top:12px}
-  table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
-  th{color:var(--dim);font-weight:600}.dim{color:var(--dim);font-size:13px}
-  .b{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
-  .b-high,.b-ok{background:#1a7f37;color:#fff}.b-medium,.b-weak{background:#9e6a03;color:#fff}.b-low,.b-missing{background:#6e7681;color:#fff}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
-  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
-  .stat .n{font-size:24px;font-weight:700}.stat .l{color:var(--dim);font-size:12px}
-  ul.checks{list-style:none;padding:0;margin:0;columns:2}ul.checks li{padding:3px 0;font-size:14px}
-  ul.checks li.ok{color:#3fb950}ul.checks li.warn{color:#d29922}
-  .ring{display:inline-block;font-weight:700;font-size:18px}
-  footer{color:var(--dim);font-size:12px;margin-top:32px;text-align:center}
+:root {
+  --bg: #0d1117;
+  --card: #161b22;
+  --line: #30363d;
+  --text: #e6edf3;
+  --dim: #8b949e;
+  --accent: #58a6ff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+h1 { font-size: 22px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 28px 0 12px; color: var(--accent); }
+
+.sub { color: var(--dim); font-size: 13px; margin-bottom: 8px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-top: 12px;
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--dim); font-weight: 600; }
+.dim { color: var(--dim); font-size: 13px; }
+
+/* confidence / status pills */
+.b { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.b-high, .b-ok { background: #1a7f37; color: #fff; }
+.b-medium, .b-weak { background: #9e6a03; color: #fff; }
+.b-low, .b-missing { background: #6e7681; color: #fff; }
+
+/* stat tiles */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.stat .n { font-size: 24px; font-weight: 700; }
+.stat .l { color: var(--dim); font-size: 12px; }
+
+/* seo check list */
+ul.checks { list-style: none; padding: 0; margin: 0; columns: 2; }
+ul.checks li { padding: 3px 0; font-size: 14px; }
+ul.checks li.ok { color: #3fb950; }
+ul.checks li.warn { color: #d29922; }
+
+.ring { display: inline-block; font-weight: 700; font-size: 18px; }
+
+footer { color: var(--dim); font-size: 12px; margin-top: 32px; text-align: center; }
+
+/* a light theme could be offered via prefers-color-scheme down the line */
+/* @media (prefers-color-scheme: light) { :root { --bg:#fff; --text:#111; } } */
 </style></head>
 <body><div class="wrap">
   <h1>SiteScope report</h1>
-  <div class="sub">https://vercel.com/ · status 200 · 519972 bytes · 228ms · 2026-06-29T12:30:50.677Z</div>
+  <div class="sub">https://vercel.com/ · status 200 · 574204 bytes · 221ms · 2026-07-12T21:00:29.633Z</div>
 
   <div class="grid">
+    <div class="stat"><div class="n">C</div><div class="l">overall health (71/100)</div></div>
     <div class="stat"><div class="n">4</div><div class="l">technologies</div></div>
     <div class="stat"><div class="n">C</div><div class="l">security grade</div></div>
     <div class="stat"><div class="n">90</div><div class="l">SEO score</div></div>
-    <div class="stat"><div class="n">93</div><div class="l">resources</div></div>
+    <div class="stat"><div class="n">91</div><div class="l">resources</div></div>
     <div class="stat"><div class="n">3</div><div class="l">cookies</div></div>
   </div>
+  
+  <h2>🚩 Top issues</h2>
+  <div class="card"><ul class="checks"><li class="warn">▲ <b>[Security]</b> Permissions-Policy — header not set</li><li class="warn">▲ <b>[Security]</b> Content-Security-Policy (CSP) — uses unsafe-inline/unsafe-eval (weakens CSP)</li><li class="warn">▲ <b>[SEO]</b> Description length 45 (aim for 50–160)</li><li class="warn">▲ <b>[Performance]</b> 91 total requests (over the 80 rule-of-thumb budget)</li><li class="warn">▲ <b>[Performance]</b> 41 script resources (over 15)</li><li class="warn">▲ <b>[Performance]</b> 1 &lt;head&gt; script(s) without defer/async/module — these block first paint</li><li class="warn">▲ <b>[Cookies]</b> &quot;_v-consent&quot; is missing HttpOnly (readable by JS)</li><li class="warn">▲ <b>[Cookies]</b> &quot;_v-consent&quot; is scoped to a broad domain (.vercel.com)</li></ul></div>
 
   <h2>⚙️ Technologies</h2>
-  <div class="card"><table><tr><th>Technology</th><th>Category</th><th>Confidence</th><th>Evidence</th></tr><tr><td><b>Tailwind CSS</b></td><td>CSS Framework</td><td><span class="b b-high">high</span></td><td class="dim">Tailwind color-scale utility; Tailwind responsive prefix</td></tr><tr><td><b>Vercel</b></td><td>Hosting</td><td><span class="b b-high">high</span></td><td class="dim">server: Vercel; x-vercel-id: bom1::iad1::thsqv-1782736250220-9c8b0fb…</td></tr><tr><td><b>React</b></td><td>JS Framework</td><td><span class="b b-medium">medium</span></td><td class="dim">implied by Next.js</td></tr><tr><td><b>Next.js</b></td><td>Meta Framework</td><td><span class="b b-high">high</span></td><td class="dim">/_next/static/ asset path; x-powered-by: Next.js</td></tr></table></div>
+  <div class="card"><table><tr><th>Technology</th><th>Version</th><th>Category</th><th>Confidence</th><th>Evidence</th></tr><tr><td><b>Tailwind CSS</b></td><td class="dim">—</td><td>CSS Framework</td><td><span class="b b-high">high</span></td><td class="dim">Tailwind color-scale utility; Tailwind responsive prefix</td></tr><tr><td><b>Vercel</b></td><td class="dim">—</td><td>Hosting</td><td><span class="b b-high">high</span></td><td class="dim">server: Vercel; x-vercel-id: bom1::iad1::74wqm-1783890028906-5215e46…</td></tr><tr><td><b>React</b></td><td class="dim">—</td><td>JS Framework</td><td><span class="b b-medium">medium</span></td><td class="dim">implied by Next.js</td></tr><tr><td><b>Next.js</b></td><td class="dim">—</td><td>Meta Framework</td><td><span class="b b-high">high</span></td><td class="dim">/_next/static/ asset path; x-powered-by: Next.js</td></tr></table></div>
 
   <h2>🔒 Security headers — C (73/100)</h2>
   <div class="card"><table><tr><th>Header</th><th>Status</th><th>Note</th></tr><tr><td>Strict-Transport-Security (HSTS)</td><td><span class="b b-ok">ok</span></td><td class="dim"></td></tr><tr><td>Content-Security-Policy (CSP)</td><td><span class="b b-weak">weak</span></td><td class="dim">uses unsafe-inline/unsafe-eval (weakens CSP)</td></tr><tr><td>X-Frame-Options</td><td><span class="b b-ok">ok</span></td><td class="dim"></td></tr><tr><td>X-Content-Type-Options</td><td><span class="b b-ok">ok</span></td><td class="dim"></td></tr><tr><td>Referrer-Policy</td><td><span class="b b-ok">ok</span></td><td class="dim"></td></tr><tr><td>Permissions-Policy</td><td><span class="b b-missing">missing</span></td><td class="dim">header not set</td></tr></table></div>
@@ -43,15 +93,40 @@
 
   <h2>🔍 SEO — 90/100</h2>
   <div class="card">
-    <p><b>Title:</b> Agentic Infrastructure<br><b>Description:</b> The autonomous stack for every app and agent.<br><b>Canonical:</b> https://vercel.com</p>
-    <ul class="checks"><li class="ok">✓ Has &lt;title&gt;</li><li class="ok">✓ Title length OK (22 chars)</li><li class="ok">✓ Has meta description</li><li class="warn">▲ Description length 45 (aim for 50–160)</li><li class="ok">✓ Has canonical URL</li><li class="ok">✓ Has viewport meta</li><li class="ok">✓ Has &lt;html lang&gt;</li><li class="ok">✓ Exactly one &lt;h1&gt;</li><li class="ok">✓ All images have alt text</li><li class="ok">✓ Open Graph tags present (7)</li></ul>
+    <p><b>Title:</b> Agentic Infrastructure - Vercel<br><b>Description:</b> The autonomous stack for every app and agent.<br><b>Canonical:</b> https://vercel.com</p>
+    <ul class="checks"><li class="ok">✓ Has &lt;title&gt;</li><li class="ok">✓ Title length OK (31 chars)</li><li class="ok">✓ Has meta description</li><li class="warn">▲ Description length 45 (aim for 50–160)</li><li class="ok">✓ Has canonical URL</li><li class="ok">✓ Has viewport meta</li><li class="ok">✓ Has &lt;html lang&gt;</li><li class="ok">✓ Exactly one &lt;h1&gt;</li><li class="ok">✓ All images have alt text</li><li class="ok">✓ Open Graph tags present (7)</li></ul>
   </div>
 
-  <h2>🌐 Network resources (93)</h2>
+  <h2>🌐 Network resources (91)</h2>
   <div class="card">
-    <p class="dim">First-party: 69 · Third-party: 24 from 2 hosts</p>
-    <table><tr><th>Type</th><th>Count</th></tr><tr><td>script</td><td>47</td></tr><tr><td>image</td><td>19</td></tr><tr><td>icon</td><td>11</td></tr><tr><td>font</td><td>7</td></tr><tr><td>asset</td><td>5</td></tr><tr><td>stylesheet</td><td>4</td></tr></table>
+    <p class="dim">First-party: 68 · Third-party: 23 from 2 hosts</p>
+    <table><tr><th>Type</th><th>Count</th></tr><tr><td>script</td><td>41</td></tr><tr><td>image</td><td>20</td></tr><tr><td>icon</td><td>11</td></tr><tr><td>asset</td><td>8</td></tr><tr><td>font</td><td>7</td></tr><tr><td>stylesheet</td><td>4</td></tr></table>
   </div>
+  
+  <h2>⚡ Performance budget — 63/100</h2>
+  <div class="card">
+    <p class="dim">Requests: 91 · Scripts: 41 · Stylesheets: 4 · Third-party hosts: 2 · Total weight: 991.0 B</p>
+    <ul class="checks"><li class="warn">▲ 91 total requests (over the 80 rule-of-thumb budget)</li><li class="warn">▲ 41 script resources (over 15)</li><li class="ok">✓ 4 stylesheet resources</li><li class="ok">✓ 2 third-party hosts</li><li class="warn">▲ 1 &lt;head&gt; script(s) without defer/async/module — these block first paint</li><li class="ok">✓ Total resource weight 991.0 B (under 2.0 MB)</li><li class="ok">✓ JS weight 991.0 B (under 500.0 KB)</li><li class="ok">✓ Image weight 0 B (under 1.0 MB)</li></ul>
+  </div>
+  
+  <h2>🤖 Crawlability — 100/100</h2>
+  <div class="card">
+    <p class="dim">robots.txt: found · Sitemap: 7933 URLs</p>
+    <ul class="checks"><li class="ok">✓ robots.txt found</li><li class="ok">✓ robots.txt does not block the whole site</li><li class="ok">✓ Scanned page is crawlable</li><li class="ok">✓ Sitemap declared in robots.txt</li><li class="ok">✓ Sitemap is reachable</li><li class="ok">✓ Sitemap lists 7933 URL(s)</li></ul>
+  </div>
+  
+  <h2>🌍 Infrastructure</h2>
+  <div class="card"><table>
+    <tr><td>IP address</td><td>64.239.109.65</td></tr>
+    <tr><td>Reverse DNS</td><td>—</td></tr>
+    <tr><td>Hosted by</td><td>Vercel, INC (AS16509)</td></tr>
+    <tr><td>Location</td><td>Walnut, California, United States</td></tr>
+    <tr><td>All IPs</td><td>64.239.109.65, 64.239.109.193</td></tr>
+    
+    
+  </table></div>
+  
+  
 
   <footer>Generated by SiteScope · single HTML fetch analysis</footer>
 </div></body></html>
