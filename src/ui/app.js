@@ -288,17 +288,38 @@ function pageInfra(r) {
 function pageSecurity(r) {
   const wrap = document.createElement("div");
   const h = r.headers;
+  const band = gradeGood(h.grade); // good / mid / poor
+  const present = h.security.filter((s) => s.status === "ok").length;
+
+  // one row per header: a leading mark, the header name, then the note
   const rows = h.security.map((s) => {
-    const cls = s.status === "ok" ? "ok" : s.status === "weak" ? "warn" : "bad";
-    const label = s.status === "ok" ? "present" : s.status === "weak" ? "weak" : "missing";
-    return `<tr><td>${esc(s.label)}</td><td><span class="chip ${cls}">${label}</span></td><td class="dim">${esc(s.note || "")}</td></tr>`;
+    const mark = s.status === "ok"
+      ? '<span class="yn yes">✓</span>'
+      : s.status === "weak"
+        ? '<span class="yn warn">▲</span>'
+        : '<span class="yn no">✕</span>';
+    const word = s.status === "ok" ? "present" : s.status === "weak" ? "weak" : "missing";
+    return `<tr>
+      <td class="ic">${mark}</td>
+      <td><strong>${esc(s.label)}</strong></td>
+      <td class="dim">${esc(s.note || word)}</td>
+    </tr>`;
   }).join("");
+
   wrap.innerHTML =
     head("Security headers", "The six headers that most affect how safely a browser treats the page, graded and weighted.") +
-    `<div class="card ${gradeGood(h.grade) === "good" ? "ok" : gradeGood(h.grade) === "mid" ? "warn" : "bad"}">
-      <h2>Grade ${esc(h.grade)} · ${h.score}/100</h2>
-      <div class="meter"><i class="${scoreClass(h.score)}" style="width:${h.score}%"></i></div>
-      <table style="margin-top:14px"><thead><tr><th>Header</th><th>Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>
+    `<div class="card g-${band}">
+      <div class="grade-banner">
+        <div class="badge">${esc(h.grade)}</div>
+        <div class="meat">
+          <div class="score-line"><strong>${h.score}</strong><span class="dim">/100</span> · ${present} of ${h.security.length} headers in place</div>
+          <div class="meter"><i class="${scoreClass(h.score)}" style="width:${h.score}%"></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Header by header</h2>
+      <table class="rows"><tbody>${rows}</tbody></table>
     </div>
     <div class="card">
       <h2>Server &amp; transfer</h2>
