@@ -338,24 +338,46 @@ function pageSecurity(r) {
 function pageCookies(r) {
   const wrap = document.createElement("div");
   const c = r.cookies;
+  const secure = c.cookies.filter((ck) => ck.secure).length;
+  // small check/cross so a long cookie table doesn't turn into a wall of pills
+  const yes = '<span class="yn yes">✓</span>';
+  const no = '<span class="yn no">✕</span>';
+  const meh = '<span class="yn warn">✕</span>';
+
   const rows = c.cookies.map((ck) => `
     <tr>
       <td class="mono">${esc(ck.name)}</td>
-      <td>${ck.secure ? '<span class="chip ok">yes</span>' : '<span class="chip bad">no</span>'}</td>
-      <td>${ck.httpOnly ? '<span class="chip ok">yes</span>' : '<span class="chip warn">no</span>'}</td>
-      <td>${ck.sameSite ? esc(ck.sameSite) : '<span class="chip warn">unset</span>'}</td>
+      <td class="ic">${ck.secure ? yes : no}</td>
+      <td class="ic">${ck.httpOnly ? yes : meh}</td>
+      <td>${ck.sameSite ? `<span class="chip mute">${esc(ck.sameSite)}</span>` : '<span class="yn warn">unset</span>'}</td>
       <td class="dim mono">${esc(ck.domain || "—")}</td>
     </tr>`).join("");
+
+  const summary = c.count
+    ? `<div class="tiles compact">
+        <div class="tile"><div class="n">${c.count}</div><div class="l">cookies</div></div>
+        <div class="tile"><div class="n ${secure === c.count ? "good" : "mid"}">${secure}/${c.count}</div><div class="l">marked secure</div></div>
+        <div class="tile"><div class="n ${c.issues.length ? "mid" : "good"}">${c.issues.length}</div><div class="l">flags</div></div>
+      </div>`
+    : "";
+
   wrap.innerHTML =
     head("Cookies", "Every Set-Cookie on the response, with its security attributes. Values are masked.") +
+    summary +
     (c.count
-      ? `<div class="card"><table><thead><tr><th>Name</th><th>Secure</th><th>HttpOnly</th><th>SameSite</th><th>Domain</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      ? `<div class="card"><table class="cookie-table"><thead><tr><th>Name</th><th>Secure</th><th>HttpOnly</th><th>SameSite</th><th>Domain</th></tr></thead><tbody>${rows}</tbody></table></div>`
       : `<div class="card"><p class="dim">No cookies set on the initial response.</p></div>`) +
     (c.issues.length
       ? `<div class="card warn"><h2>${c.issues.length} flag${c.issues.length > 1 ? "s" : ""}</h2>${c.issues.map((i) => `<div class="flag">${esc(i)}</div>`).join("")}</div>`
       : c.count ? `<div class="card ok"><p class="pass">No cookie issues found.</p></div>` : "");
   return wrap;
 }
+
+// idea for later: a session-vs-persistent split in the summary strip.
+// function cookieLifetimes(list) {
+//   const session = list.filter((ck) => !ck.expires && !ck.maxAge).length;
+//   return { session, persistent: list.length - session };
+// }
 
 function pageSeo(r) {
   const wrap = document.createElement("div");
