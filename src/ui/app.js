@@ -179,7 +179,7 @@ function pageOverview(r) {
         <dt>Server</dt><dd>${esc(r.headers.server.server)}</dd>
         <dt>Powered by</dt><dd>${esc(r.headers.server.poweredBy)}</dd>
         <dt>Compression</dt><dd>${esc(r.headers.transfer.contentEncoding)}</dd>
-        <dt>Top technology</dt><dd>${r.frameworks[0] ? esc(r.frameworks[0].name) : "—"}</dd>
+        <dt>Top technology</dt><dd>${r.frameworks[0] ? esc(r.frameworks[0].name) + (r.frameworks[0].version ? " " + esc(r.frameworks[0].version) : "") : "—"}</dd>
         <dt>IP address</dt><dd class="mono">${esc(r.infra && r.infra.primaryIp)}</dd>
         <dt>Hosted by</dt><dd>${r.infra && r.infra.geo ? esc(r.infra.geo.org || r.infra.geo.isp) : '<span class="dim">—</span>'}${r.infra && r.infra.geo && r.infra.geo.country ? ` <span class="dim">· ${esc(r.infra.geo.country)}</span>` : ""}</dd>
         <dt>Third-party hosts</dt><dd>${r.network.thirdPartyHosts.length}</dd>
@@ -193,6 +193,7 @@ function pageTech(r) {
   const rows = r.frameworks.map((f) => `
     <tr>
       <td><strong>${esc(f.name)}</strong></td>
+      <td class="dim mono">${esc(f.version || "—")}</td>
       <td class="dim">${esc(f.category)}</td>
       <td><span class="chip conf-${esc(f.confidence)}">${esc(f.confidence)}</span></td>
       <td class="dim">${esc(f.evidence.join("; "))}</td>
@@ -201,7 +202,7 @@ function pageTech(r) {
     head("Technologies", "Frameworks, platforms and infrastructure inferred from the HTML and response headers — each with the evidence that triggered it.") +
     `<div class="card">
       ${r.frameworks.length
-        ? `<table><thead><tr><th>Technology</th><th>Category</th><th>Confidence</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table>`
+        ? `<table><thead><tr><th>Technology</th><th>Version</th><th>Category</th><th>Confidence</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table>`
         : `<p class="dim">Nothing detected. Client-only SPAs that render in JavaScript often look empty to a single fetch.</p>`}
     </div>`;
   return wrap;

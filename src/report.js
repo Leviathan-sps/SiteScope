@@ -48,8 +48,9 @@ export function renderTerminal(report, { color: useColor = true } = {}) {
   if (!report.frameworks.length) lines.push(`  ${c.gray}none detected${c.reset}`);
   for (const f of report.frameworks) {
     const conf = f.confidence === "high" ? c.green : f.confidence === "medium" ? c.yellow : c.gray;
+    const name = f.version ? `${f.name} ${f.version}` : f.name;
     lines.push(
-      `  ${c.bold}${f.name.padEnd(18)}${c.reset} ${c.dim}${f.category.padEnd(16)}${c.reset} ${conf}${f.confidence}${c.reset} ${c.gray}(${f.evidence[0]})${c.reset}`
+      `  ${c.bold}${name.padEnd(18)}${c.reset} ${c.dim}${f.category.padEnd(16)}${c.reset} ${conf}${f.confidence}${c.reset} ${c.gray}(${f.evidence[0]})${c.reset}`
     );
   }
 
@@ -143,9 +144,9 @@ export function renderMarkdown(report) {
   L.push("## ⚙️ Technologies");
   if (!report.frameworks.length) L.push("_None detected._");
   else {
-    L.push("| Technology | Category | Confidence | Evidence |");
-    L.push("|---|---|---|---|");
-    for (const f of report.frameworks) L.push(`| **${f.name}** | ${f.category} | ${f.confidence} | ${f.evidence.join("; ")} |`);
+    L.push("| Technology | Version | Category | Confidence | Evidence |");
+    L.push("|---|---|---|---|---|");
+    for (const f of report.frameworks) L.push(`| **${f.name}** | ${f.version || "—"} | ${f.category} | ${f.confidence} | ${f.evidence.join("; ")} |`);
   }
   L.push("");
 
@@ -239,7 +240,7 @@ export function renderHtml(report) {
   const badge = (status) => `<span class="b b-${status}">${status}</span>`;
 
   const techRows = report.frameworks
-    .map((f) => `<tr><td><b>${esc(f.name)}</b></td><td>${esc(f.category)}</td><td>${badge(f.confidence)}</td><td class="dim">${esc(f.evidence.join("; "))}</td></tr>`)
+    .map((f) => `<tr><td><b>${esc(f.name)}</b></td><td class="dim">${esc(f.version || "—")}</td><td>${esc(f.category)}</td><td>${badge(f.confidence)}</td><td class="dim">${esc(f.evidence.join("; "))}</td></tr>`)
     .join("");
 
   const secRows = report.headers.security
@@ -303,7 +304,7 @@ ${REPORT_CSS}</style></head>
   </div>
 
   <h2>⚙️ Technologies</h2>
-  <div class="card"><table><tr><th>Technology</th><th>Category</th><th>Confidence</th><th>Evidence</th></tr>${techRows || '<tr><td class="dim" colspan=4>None detected</td></tr>'}</table></div>
+  <div class="card"><table><tr><th>Technology</th><th>Version</th><th>Category</th><th>Confidence</th><th>Evidence</th></tr>${techRows || '<tr><td class="dim" colspan=5>None detected</td></tr>'}</table></div>
 
   <h2>🔒 Security headers — ${esc(report.headers.grade)} (${report.headers.score}/100)</h2>
   <div class="card"><table><tr><th>Header</th><th>Status</th><th>Note</th></tr>${secRows}</table></div>
