@@ -7,6 +7,29 @@ const el = (html) => { const t = document.createElement("template"); t.innerHTML
 
 const state = { report: null, loading: false, error: null };
 
+// ---------- theme ----------
+// remember the choice; fall back to whatever the OS prefers on first visit.
+const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+let theme = localStorage.getItem("ss-theme") || (prefersDark ? "dark" : "light");
+applyTheme(theme);
+
+function applyTheme(t) {
+  theme = t;
+  document.documentElement.dataset.theme = t;
+  const btn = $("theme-toggle");
+  if (btn) btn.textContent = t === "dark" ? "☀" : "☾";
+}
+$("theme-toggle").addEventListener("click", () => {
+  const next = theme === "dark" ? "light" : "dark";
+  localStorage.setItem("ss-theme", next);
+  applyTheme(next);
+});
+
+// keep in sync if the OS flips and the user never picked one themselves
+// window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+//   if (!localStorage.getItem("ss-theme")) applyTheme(e.matches ? "dark" : "light");
+// });
+
 let history = [];
 try { history = JSON.parse(localStorage.getItem("ss-history") || "[]"); } catch {}
 renderHistory();

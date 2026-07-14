@@ -330,3 +330,52 @@ td.ic { width: 1%; white-space: nowrap; text-align: center; }
   background: #f7f7f1; border: 1px dashed var(--line-strong);
   border-radius: 3px; padding: 10px 13px; margin: 12px 0;
 }
+
+/* ---------- theme toggle ---------- */
+
+.theme-toggle {
+  flex: none;
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1;
+  padding: 8px 11px;
+}
+.theme-toggle:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+/* ---------- dark mode ---------- */
+/* the toggle stamps data-theme on <html>; app.js seeds it from the OS pref */
+
+:root[data-theme="dark"] {
+  --paper: #15161a;
+  --panel: #1d1e23;
+  --ink: #e7e7e2;
+  --ink-soft: #adaea6;
+  --ink-faint: #7d7e76;
+  --line: #31323a;
+  --line-strong: #45464f;
+  --accent: #5b9bff;
+  --accent-ink: #8fbcff;
+  --ok: #4cbe6a;
+  --warn: #d3a23c;
+  --bad: #e46670;
+  --ok-wash: #17281c;
+  --warn-wash: #292011;
+  --bad-wash: #2a1719;
+}
+
+/* a handful of spots bake in light tints — nudge them for dark */
+:root[data-theme="dark"] body {
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.022) 1px, transparent 0);
+}
+:root[data-theme="dark"] #scan-btn { color: #0d1526; }
+:root[data-theme="dark"] .chip.ok   { border-color: #2c4a34; }
+:root[data-theme="dark"] .chip.warn { border-color: #4a3d1c; }
+:root[data-theme="dark"] .chip.bad  { border-color: #4d2a2d; }
+:root[data-theme="dark"] .chip.conf-high   { border-color: #2c4a34; }
+:root[data-theme="dark"] .chip.conf-medium { border-color: #4a3d1c; }
+:root[data-theme="dark"] .chip.mute,
+:root[data-theme="dark"] .chip.conf-low { background: #2a2b31; border-color: var(--line); }
+:root[data-theme="dark"] .notice { background: #212228; }
