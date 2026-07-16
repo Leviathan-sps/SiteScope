@@ -133,6 +133,9 @@ button {
 
 nav#nav {
   display: flex;
+  /* the row is horizontally scrollable, which makes it a scroll container —
+     without this it gets squished to nothing when a tall report overflows */
+  flex: none;
   gap: 2px;
   padding: 0 22px;
   background: var(--panel);
