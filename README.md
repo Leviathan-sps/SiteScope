@@ -1,6 +1,6 @@
 # SiteScope
 
-Point it at any website and it tells you what the site is built with, how locked-down its headers and cookies are, how well it's set up for search, and every resource the page pulls in. One fetch, one report you can hand to someone else.
+Give it any website, and it'll show you what it's built with, how secure its headers and cookies are, how well it's optimized for search engines, and every resource the page loads. Just run it once and you'll get a clean report that's easy to share with anyone.
 
 No dependencies, just Node.js 18 or newer. Runs pretty much anywhere.
 
@@ -25,40 +25,31 @@ Security headers  ■ C (73/100)
   ...
 ```
 
-## What you get
+## What it gives
 
-**Overall health score.** Every graded module — security, SEO, cookies, performance, crawlability — gets rolled into a single weighted 0–100 score with an A–F grade. There's also a "top issues" list that pulls the worst offenders from across all of them so you don't have to read the whole thing.
+**Overall health score.** Rolls every graded module (security, SEO, cookies, performance, crawlability) into a single weighted 0–100 score with an A–F grade, plus a "top issues" list of the worst offenders across all of them.
 
-**Framework detection.** This is the big one. SiteScope recognizes:
+**Framework detection.** Detects the JS/meta-frameworks, CMS, build tools, analytics, CDNs, and hosting a site runs on, and guesses the backend runtime from its cookies. Each match comes with a confidence level, the evidence behind it, and a version when one's visible.
 
-- JS frameworks: React, Vue, Angular, Svelte, Preact, Alpine, HTMX, Qwik, jQuery
-- Meta-frameworks: Next.js, Nuxt, Gatsby, Remix, SvelteKit, Astro
-- CMS / platforms: WordPress, Ghost, Drupal, Joomla, Shopify, Magento, BigCommerce, Wix, Webflow, Squarespace
-- Everything else: build tools (Vite/webpack), CSS frameworks (Tailwind/Bootstrap), analytics (GA4, GTM), Sentry, Stripe, bot protection (Turnstile/hCaptcha/reCAPTCHA), CDNs (jsDelivr/unpkg/cdnjs), and server/hosting (Cloudflare, Vercel, Netlify, Nginx, Express…)
+**Header analysis.** Grades the six security headers that matter most into an A–F score and calls out weak configs like an `unsafe-inline` CSP.
 
-It'll also guess the backend runtime from session-cookie names — Laravel, Django, Express, ASP.NET, JSP, PHP. Each match comes with a confidence level, the evidence that triggered it, and a version number when one happens to be visible in a filename, CDN url, or generator meta tag.
+**Cookie audit.** Flags missing `Secure` / `HttpOnly` / `SameSite` attributes and over-broad scoping on every `Set-Cookie`, with values masked so the report is safe to share.
 
-**Header analysis.** Grades the six headers that matter most (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) into an A–F score, calls out weak configs like an `unsafe-inline` CSP, and surfaces the server/compression/caching headers too.
+**SEO audit.** Checks title, meta description, canonical, robots, Open Graph + Twitter cards, headings, missing `alt` text, and link counts, scored out of 100.
 
-**Cookie audit.** Reads every `Set-Cookie` and flags the missing `Secure` / `HttpOnly` / `SameSite` attributes, invalid `SameSite=None`, and cookies scoped too broadly. Values are masked so you can paste the report somewhere.
+**Crawlability.** Reads `robots.txt` and its declared sitemaps to check whether the scanned page is allowed to be crawled, flagging a missing sitemap or a site-wide disallow.
 
-**SEO audit.** Title, meta description (with length checks), canonical, robots, viewport, `lang`, Open Graph + Twitter cards, heading structure, images missing `alt`, internal vs external link counts. Scored out of 100.
+**Performance budget.** A static budget read from the resource map (request, script, stylesheet, third-party, and render-blocking counts); add `--probe` for real byte weights.
 
-**Crawlability.** Grabs `robots.txt` and whatever sitemap(s) it declares (following one level into a sitemap index), checks whether the page you scanned is actually allowed to be crawled, and flags a missing or empty sitemap or a site-wide disallow.
+**Network map.** Lists every sub-resource split first- vs third-party and grouped by host and type. `--probe` fetches the real sizes and status codes.
 
-**Performance budget.** Rule-of-thumb budgets built from the resource map — request count, script/stylesheet count, third-party host count, render-blocking `<head>` scripts. Add `--probe` and you get real byte-weight budgets (total/JS/image) on top. No headless browser needed.
+**Infrastructure.** Resolves the host's IPs, reverse DNS, hosting and geo/ASN (org, city/country), and NS/MX records; `--no-geo` skips the outbound call.
 
-**Network map.** Pulls out every sub-resource (scripts, styles, images, fonts, preloads, icons), splits first- vs third-party, and groups them by host and type. `--probe` fires HEAD requests for the real sizes and status codes.
+**Deep scan (opt-in).** `--scan-ports` checks for exposed service ports and `--scan-paths` probes sensitive paths like admin panels and `.git`/`.env`. It sends real traffic, so only run it on hosts you're allowed to test.
 
-**Infrastructure.** Resolves the host to its IP address(es), does a reverse DNS lookup, and — through a free geo/ASN service — figures out who hosts it and where (org, ASN, city/country), plus NS and MX records. On by default; `--no-geo` skips the outbound call.
-
-**Deep scan (opt-in).** `--scan-ports` does a TCP-connect check against a curated list of common service ports and flags databases or RDP left open to the internet. `--scan-paths` probes common/interesting paths — robots, sitemaps, admin panels, and dotfiles like `.git` and `.env` that really shouldn't be reachable. This one sends real traffic, see the note below.
-
-**Vulnerability check.** Part of the deep scan (`--recon`, or the UI's deep-scan checkbox) — it runs alongside the port/path probes and sends nothing new itself. It flags outdated libraries whose version we can actually read (jQuery, Bootstrap) against known issues, calls out the services or sensitive files the scan found exposed, and points out version banners that make you easy to fingerprint. Findings come ranked worst-first with a severity, a one-line why, and a fix. It's a heads-up, not nmap and not a real audit — don't treat an empty result as an all-clear.
+**Vulnerability check.** Part of the deep scan — flags outdated libraries, exposed services and files, and revealing version banners, ranked worst-first with a severity and a fix. It's a heads-up, not a real audit.
 
 **Reports.** Terminal (colorized), JSON (pipe it to `jq`), Markdown (drop into a PR or doc), or a self-contained HTML dashboard.
-
-> **Heads up: deep scan sends real traffic to the target.** `--scan-ports`, `--scan-paths`, and the UI's **deep scan** checkbox open connections and issue requests to the host. Only point them at systems you own or have permission to test. The lists are small and hand-picked on purpose — this isn't a brute-force scanner.
 
 ## The web UI
 
@@ -74,7 +65,7 @@ An empty scan lands you here:
 
 ![SiteScope landing screen](docs/img/landing.png)
 
-The overview tab is the tl;dr — score cards up top, the important facts underneath:
+The overview tab is the tl;dr, score cards up top, the important facts underneath:
 
 ![Overview tab](docs/img/overview.png)
 
@@ -92,7 +83,7 @@ And the security tab grades those six headers:
 
 ## Install / run
 
-Nothing to install — clone it and run with Node 18+:
+Nothing to install, clone it and run with Node 18+:
 
 ```bash
 node bin/sitescope.js <url>
@@ -145,7 +136,7 @@ sitescope news.ycombinator.com --format json | jq '.frameworks[].name'
 
 ## How it works
 
-SiteScope makes one GET request for the page HTML, then runs every analyzer over that same response. That keeps it fast and keeps it polite — one hit, not fifty. Framework detection works off HTML signatures plus response headers; the network map is parsed straight from the markup (pass `--probe` if you want the real sizes fetched).
+SiteScope makes one GET request for the page HTML, then runs every analyzer over that same response. That keeps it fast and keeps it polite, one hit, not fifty. Framework detection works off HTML signatures plus response headers; the network map is parsed straight from the markup (pass `--probe` if you want the real sizes fetched).
 
 Because everything hangs off that single server-rendered fetch, it sees what a crawler sees. It doesn't run JavaScript, so a client-only SPA that renders nothing in its initial HTML is going to show fewer signals than it deserves. A headless-browser mode is on the list.
 
