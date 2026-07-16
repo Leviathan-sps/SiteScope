@@ -54,7 +54,7 @@ It'll also guess the backend runtime from session-cookie names — Laravel, Djan
 
 **Deep scan (opt-in).** `--scan-ports` does a TCP-connect check against a curated list of common service ports and flags databases or RDP left open to the internet. `--scan-paths` probes common/interesting paths — robots, sitemaps, admin panels, and dotfiles like `.git` and `.env` that really shouldn't be reachable. This one sends real traffic, see the note below.
 
-**Vulnerability check.** A passive pass over everything above — it sends nothing new. It flags outdated libraries whose version we can actually read (jQuery, Bootstrap) against known issues, calls out services or sensitive files a deep scan found exposed, and points out version banners that make you easy to fingerprint. Findings come ranked worst-first with a severity, a one-line why, and a fix. It's a heads-up from a single fetch, not nmap and not a real audit — don't treat an empty result as an all-clear.
+**Vulnerability check.** Part of the deep scan (`--recon`, or the UI's deep-scan checkbox) — it runs alongside the port/path probes and sends nothing new itself. It flags outdated libraries whose version we can actually read (jQuery, Bootstrap) against known issues, calls out the services or sensitive files the scan found exposed, and points out version banners that make you easy to fingerprint. Findings come ranked worst-first with a severity, a one-line why, and a fix. It's a heads-up, not nmap and not a real audit — don't treat an empty result as an all-clear.
 
 **Reports.** Terminal (colorized), JSON (pipe it to `jq`), Markdown (drop into a PR or doc), or a self-contained HTML dashboard.
 

@@ -45,9 +45,9 @@ export async function analyze(url, opts = {}) {
     recon = { ports, paths };
   }
 
-  // passive vuln pass — reads what's above, sends nothing new. picks up more
-  // when recon ran, since exposed ports/paths feed into it.
-  const vulns = analyzeVulns({ frameworks, headers, recon });
+  // vuln check rides along with the deep scan — only runs when recon did.
+  // it sends nothing new itself, just reads the frameworks/headers/recon above.
+  const vulns = recon ? analyzeVulns({ frameworks, headers, recon }) : null;
 
   return {
     meta: {

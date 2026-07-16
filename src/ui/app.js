@@ -364,7 +364,16 @@ function pageSecurity(r) {
 
 function pageVulns(r) {
   const wrap = document.createElement("div");
-  const v = r.vulns || { total: 0, findings: [], counts: {}, risk: "none" };
+  const lead = "A read of the scan: outdated libraries with known issues, services left exposed, and stack details that hand an attacker the roadmap. Not a full scanner — think heads-up, not audit.";
+
+  // the check is part of the deep scan; absent means it never ran
+  if (!r.vulns) {
+    wrap.innerHTML = head("Vulnerabilities", lead) +
+      `<div class="notice">The vulnerability check runs as part of the <strong>deep scan</strong>. Tick <strong>deep scan</strong> before scanning to flag outdated libraries, exposed service ports, and readable sensitive files.</div>`;
+    return wrap;
+  }
+
+  const v = r.vulns;
   const c = v.counts || {};
   const chip = (sev) => `<span class="chip sev-${esc(sev)}">${esc(sev)}</span>`;
 
@@ -392,14 +401,7 @@ function pageVulns(r) {
       </div>`
     : `<div class="card ok"><p class="pass">No obvious issues from a passive read.</p></div>`;
 
-  // exposed ports/paths only show up when the deep scan actually ran
-  const deepOn = r.recon && (r.recon.ports || r.recon.paths);
-  const note = deepOn ? "" :
-    `<div class="notice">This is a passive read over the one fetch. Tick <strong>deep scan</strong> before scanning to also flag open service ports and readable sensitive files.</div>`;
-
-  wrap.innerHTML =
-    head("Vulnerabilities", "A passive read of the scan: outdated libraries with known issues, services left exposed, and stack details that hand an attacker the roadmap. Not a full scanner — think heads-up, not audit.") +
-    strip + table + note;
+  wrap.innerHTML = head("Vulnerabilities", lead) + strip + table;
   return wrap;
 }
 
