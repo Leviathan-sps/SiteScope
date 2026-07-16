@@ -64,6 +64,19 @@ export function renderTerminal(report, { color: useColor = true } = {}) {
     lines.push(`  ${icon} ${s.label}${s.note ? c.gray + " — " + s.note + c.reset : ""}`);
   }
 
+  if (report.vulns) {
+    const v = report.vulns;
+    h(`🛡  Vulnerabilities  ${riskColor(c, v.risk)} ${v.risk} (${v.total})`);
+    if (!v.total) {
+      lines.push(`  ${c.gray}nothing obvious — passive check only, not a full scan${c.reset}`);
+    }
+    for (const f of v.findings) {
+      const sev = sevColor(c, f.severity);
+      lines.push(`  ${sev}${f.severity.toUpperCase().padEnd(9)}${c.reset} ${c.bold}${f.title}${c.reset}${f.cve ? c.gray + " · " + f.cve + c.reset : ""}`);
+      lines.push(`    ${c.gray}${f.detail}${c.reset}`);
+    }
+  }
+
   h("🖥  Server");
   kv("Server", report.headers.server.server);
   kv("X-Powered-By", report.headers.server.poweredBy);
@@ -197,6 +210,19 @@ export function renderMarkdown(report) {
   L.push(`**Server:** ${report.headers.server.server || "—"}  ·  **Powered by:** ${report.headers.server.poweredBy || "—"}  ·  **Compression:** ${report.headers.transfer.contentEncoding || "—"}`);
   L.push("");
 
+  if (report.vulns) {
+    const v = report.vulns;
+    L.push(`## 🛡️ Vulnerabilities — ${v.risk} risk (${v.total})`);
+    if (v.total) {
+      L.push("| Severity | Finding | CVE | Fix |");
+      L.push("|---|---|---|---|");
+      for (const f of v.findings) L.push(`| ${f.severity} | ${f.title} — ${f.detail} | ${f.cve || "—"} | ${f.recommendation} |`);
+    } else {
+      L.push("_Nothing obvious. This is a passive check, not a full scan._");
+    }
+    L.push("");
+  }
+
   if (report.infra) {
     const inf = report.infra;
     L.push("## 🌍 Infrastructure");
@@ -251,12 +277,7 @@ export function renderMarkdown(report) {
   L.push(`- **Images:** ${report.seo.images.total} (${report.seo.images.missingAlt} missing alt)`);
   L.push(`- **Links:** ${report.seo.links.internal} internal · ${report.seo.links.external} external`);
   L.push(`- **Open Graph:** ${report.seo.openGraph.length} tags · **Twitter:** ${report.seo.twitter.length} tags`);
-  const failed = report.seo.checks.filter((c) => !c.pass);
-  if (failed.length) {
-    L.push("");
-    L.push("**Issues:**");
-    for (const ch of failed) L.push(`- ⚠️ ${ch.label}`);
-  }
+  pushIssues(L, report.seo.checks);
   L.push("");
 
   L.push(`## 🌐 Network resources (${report.network.total})`);
@@ -270,12 +291,7 @@ export function renderMarkdown(report) {
     L.push(`## ⚡ Performance budget — ${p.score}/100`);
     L.push(`- Requests: **${p.requests}** · Scripts: **${p.jsCount}** · Stylesheets: **${p.cssCount}** · Third-party hosts: **${p.thirdPartyHosts}**`);
     if (p.bytes) L.push(`- Total weight: **${formatBytes(p.bytes.total)}**`);
-    const failed = p.checks.filter((c) => !c.pass);
-    if (failed.length) {
-      L.push("");
-      L.push("**Issues:**");
-      for (const ch of failed) L.push(`- ⚠️ ${ch.label}`);
-    }
+    pushIssues(L, p.checks);
     L.push("");
   }
 
@@ -284,12 +300,7 @@ export function renderMarkdown(report) {
     L.push(`## 🤖 Crawlability — ${cr.score}/100`);
     L.push(`- robots.txt: ${cr.robotsTxt.present ? "found" : "not found"}`);
     L.push(`- Sitemap: ${cr.sitemap.present ? (cr.sitemap.isIndex ? `index (${cr.sitemap.urlCount} sitemaps)` : `${cr.sitemap.urlCount} URLs`) : "not found"}`);
-    const failed = cr.checks.filter((c) => !c.pass);
-    if (failed.length) {
-      L.push("");
-      L.push("**Issues:**");
-      for (const ch of failed) L.push(`- ⚠️ ${ch.label}`);
-    }
+    pushIssues(L, cr.checks);
     L.push("");
   }
 
@@ -303,6 +314,8 @@ export function renderMarkdown(report) {
 export function renderHtml(report) {
   const esc = (s) => String(s ?? "—").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
   const badge = (status) => `<span class="b b-${status}">${status}</span>`;
+  // pass/fail check list, shared by the seo / performance / crawl cards
+  const checkList = (checks) => `<ul class="checks">${(checks || []).map((ch) => `<li class="${ch.pass ? "ok" : "warn"}">${ch.pass ? "✓" : "▲"} ${esc(ch.label)}</li>`).join("")}</ul>`;
 
   const techRows = report.frameworks
     .map((f) => `<tr><td><b>${esc(f.name)}</b></td><td class="dim">${esc(f.version || "—")}</td><td>${esc(f.category)}</td><td>${badge(f.confidence)}</td><td class="dim">${esc(f.evidence.join("; "))}</td></tr>`)
@@ -316,9 +329,7 @@ export function renderHtml(report) {
     .map((ck) => `<tr><td>${esc(ck.name)}</td><td>${ck.secure ? "✅" : "❌"}</td><td>${ck.httpOnly ? "✅" : "❌"}</td><td>${esc(ck.sameSite || "—")}</td></tr>`)
     .join("");
 
-  const seoChecks = report.seo.checks
-    .map((ch) => `<li class="${ch.pass ? "ok" : "warn"}">${ch.pass ? "✓" : "▲"} ${esc(ch.label)}</li>`)
-    .join("");
+  const seoChecks = checkList(report.seo.checks);
 
   const typeRows = Object.entries(report.network.byType)
     .map(([t, n]) => `<tr><td>${esc(t)}</td><td>${n}</td></tr>`)
@@ -355,7 +366,7 @@ export function renderHtml(report) {
   <h2>⚡ Performance budget — ${perf.score}/100</h2>
   <div class="card">
     <p class="dim">Requests: ${perf.requests} · Scripts: ${perf.jsCount} · Stylesheets: ${perf.cssCount} · Third-party hosts: ${perf.thirdPartyHosts}${perf.bytes ? ` · Total weight: ${esc(formatBytes(perf.bytes.total))}` : ""}</p>
-    <ul class="checks">${perf.checks.map((ch) => `<li class="${ch.pass ? "ok" : "warn"}">${ch.pass ? "✓" : "▲"} ${esc(ch.label)}</li>`).join("")}</ul>
+    ${checkList(perf.checks)}
   </div>` : "";
 
   const cr = report.crawl;
@@ -363,7 +374,18 @@ export function renderHtml(report) {
   <h2>🤖 Crawlability — ${cr.score}/100</h2>
   <div class="card">
     <p class="dim">robots.txt: ${cr.robotsTxt.present ? "found" : "not found"} · Sitemap: ${cr.sitemap.present ? (cr.sitemap.isIndex ? `index (${cr.sitemap.urlCount} sitemaps)` : `${cr.sitemap.urlCount} URLs`) : "not found"}</p>
-    <ul class="checks">${cr.checks.map((ch) => `<li class="${ch.pass ? "ok" : "warn"}">${ch.pass ? "✓" : "▲"} ${esc(ch.label)}</li>`).join("")}</ul>
+    ${checkList(cr.checks)}
+  </div>` : "";
+
+  const vuln = report.vulns;
+  const vulnSection = vuln ? `
+  <h2>🛡️ Vulnerabilities — ${esc(vuln.risk)} risk (${vuln.total})</h2>
+  <div class="card">
+    ${vuln.total
+      ? `<table><tr><th>Severity</th><th>Finding</th><th>CVE</th><th>Fix</th></tr>
+    ${vuln.findings.map((f) => `<tr><td><span class="b b-sev-${f.severity}">${esc(f.severity)}</span></td><td><b>${esc(f.title)}</b><br><span class="dim">${esc(f.detail)}</span></td><td class="dim">${esc(f.cve || "—")}</td><td class="dim">${esc(f.recommendation)}</td></tr>`).join("")}
+  </table>`
+      : '<p class="dim">Nothing obvious — this is a passive check, not a full scan.</p>'}
   </div>` : "";
 
   const score = report.score;
@@ -385,6 +407,7 @@ ${REPORT_CSS}</style></head>
     ${score && score.score != null ? `<div class="stat"><div class="n">${esc(score.grade)}</div><div class="l">overall health (${score.score}/100)</div></div>` : ""}
     <div class="stat"><div class="n">${report.frameworks.length}</div><div class="l">technologies</div></div>
     <div class="stat"><div class="n">${esc(report.headers.grade)}</div><div class="l">security grade</div></div>
+    ${report.vulns ? `<div class="stat"><div class="n">${report.vulns.total}</div><div class="l">vuln findings (${esc(report.vulns.risk)})</div></div>` : ""}
     <div class="stat"><div class="n">${report.seo.score}</div><div class="l">SEO score</div></div>
     <div class="stat"><div class="n">${report.network.total}</div><div class="l">resources</div></div>
     <div class="stat"><div class="n">${report.cookies.count}</div><div class="l">cookies</div></div>
@@ -396,6 +419,7 @@ ${REPORT_CSS}</style></head>
 
   <h2>🔒 Security headers — ${esc(report.headers.grade)} (${report.headers.score}/100)</h2>
   <div class="card"><table><tr><th>Header</th><th>Status</th><th>Note</th></tr>${secRows}</table></div>
+  ${vulnSection}
 
   <h2>🍪 Cookies (${report.cookies.count})</h2>
   <div class="card"><table><tr><th>Name</th><th>Secure</th><th>HttpOnly</th><th>SameSite</th></tr>${cookieRows || '<tr><td class="dim" colspan=4>No cookies</td></tr>'}</table></div>
@@ -433,6 +457,25 @@ function gradeColor(c, g) {
 }
 function scoreColor(c, n) {
   return (n >= 80 ? c.green : n >= 60 ? c.yellow : c.red) + "■" + c.reset;
+}
+function riskColor(c, risk) {
+  const col = risk === "critical" || risk === "high" ? c.red : risk === "medium" ? c.yellow : risk === "low" ? c.gray : c.green;
+  return col + "■" + c.reset;
+}
+// per-finding severity color for the terminal list
+function sevColor(c, sev) {
+  if (sev === "critical" || sev === "high") return c.red;
+  if (sev === "medium") return c.yellow;
+  return c.gray;
+}
+// markdown: append the failed checks as an "Issues:" bullet list, if any.
+// used by seo / performance / crawlability so the block isn't copy-pasted.
+function pushIssues(L, checks) {
+  const failed = (checks || []).filter((c) => !c.pass);
+  if (!failed.length) return;
+  L.push("");
+  L.push("**Issues:**");
+  for (const ch of failed) L.push(`- ⚠️ ${ch.label}`);
 }
 function formatBytes(n) {
   if (!n) return "0 B";
