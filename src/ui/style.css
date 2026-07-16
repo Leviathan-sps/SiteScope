@@ -287,6 +287,14 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var
 .chip.conf-medium { color: var(--warn); background: var(--warn-wash); border-color: #e7d3a3; }
 .chip.conf-low    { color: var(--ink-faint); background: #f2f2ec; border-color: var(--line); }
 
+/* vuln severity chips — sharp, solid fills, uppercase, no emoji */
+.chip[class*="sev-"] { text-transform: uppercase; letter-spacing: .03em; color: #fff; border: 0; }
+.chip.sev-critical { background: #a40e26; }
+.chip.sev-high     { background: var(--bad); }
+.chip.sev-medium   { background: var(--warn); }
+.chip.sev-low      { background: #6a6a60; }
+.chip.sev-info     { background: var(--ink-faint); }
+
 .flag { color: var(--warn); font-size: 13.5px; padding: 3px 0; }
 .flag.bad { color: var(--bad); }
 .flag::before { content: "▲ "; }

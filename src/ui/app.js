@@ -115,6 +115,7 @@ const PAGES = {
   technologies: pageTech,
   infrastructure: pageInfra,
   security: pageSecurity,
+  vulnerabilities: pageVulns,
   cookies: pageCookies,
   seo: pageSeo,
   network: pageNetwork,
@@ -175,6 +176,8 @@ function renderLanding() {
 // color bands, kept a touch generous so a decent score still reads green
 const scoreClass = (n) => (n >= 70 ? "good" : n >= 45 ? "mid" : "poor");
 const gradeGood = (g) => (g === "A" || g === "B" ? "good" : g === "C" ? "mid" : "poor");
+// score band -> card border tone (used by the scored pages)
+const toneClass = (n) => (n >= 70 ? "ok" : n >= 45 ? "warn" : "bad");
 function head(title, lead) { return `<div class="page-head"><h1>${esc(title)}</h1><p class="lead">${esc(lead)}</p></div>`; }
 function fmtBytes(n) {
   if (!n && n !== 0) return "—";
@@ -359,6 +362,47 @@ function pageSecurity(r) {
   return wrap;
 }
 
+function pageVulns(r) {
+  const wrap = document.createElement("div");
+  const v = r.vulns || { total: 0, findings: [], counts: {}, risk: "none" };
+  const c = v.counts || {};
+  const chip = (sev) => `<span class="chip sev-${esc(sev)}">${esc(sev)}</span>`;
+
+  // quick count strip so the headline reads before the table does
+  const lowish = (c.low || 0) + (c.info || 0);
+  const strip = `<div class="tiles compact">
+      <div class="tile"><div class="n ${v.total ? "poor" : "good"}">${v.total}</div><div class="l">findings</div></div>
+      <div class="tile"><div class="n ${c.critical ? "poor" : ""}">${c.critical || 0}</div><div class="l">critical</div></div>
+      <div class="tile"><div class="n ${c.high ? "poor" : ""}">${c.high || 0}</div><div class="l">high</div></div>
+      <div class="tile"><div class="n ${c.medium ? "mid" : ""}">${c.medium || 0}</div><div class="l">medium</div></div>
+      <div class="tile"><div class="n">${lowish}</div><div class="l">low / info</div></div>
+    </div>`;
+
+  const rows = v.findings.map((f) => `
+    <tr>
+      <td>${chip(f.severity)}</td>
+      <td><strong>${esc(f.title)}</strong><div class="dim">${esc(f.detail)}</div></td>
+      <td class="mono dim">${esc(f.cve || "—")}</td>
+      <td class="dim">${esc(f.recommendation)}</td>
+    </tr>`).join("");
+
+  const table = v.total
+    ? `<div class="card ${c.critical || c.high ? "bad" : c.medium ? "warn" : ""}">
+        <table><thead><tr><th>Severity</th><th>Finding</th><th>CVE</th><th>Fix</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>`
+    : `<div class="card ok"><p class="pass">No obvious issues from a passive read.</p></div>`;
+
+  // exposed ports/paths only show up when the deep scan actually ran
+  const deepOn = r.recon && (r.recon.ports || r.recon.paths);
+  const note = deepOn ? "" :
+    `<div class="notice">This is a passive read over the one fetch. Tick <strong>deep scan</strong> before scanning to also flag open service ports and readable sensitive files.</div>`;
+
+  wrap.innerHTML =
+    head("Vulnerabilities", "A passive read of the scan: outdated libraries with known issues, services left exposed, and stack details that hand an attacker the roadmap. Not a full scanner — think heads-up, not audit.") +
+    strip + table + note;
+  return wrap;
+}
+
 function pageCookies(r) {
   const wrap = document.createElement("div");
   const c = r.cookies;
@@ -409,7 +453,7 @@ function pageSeo(r) {
   const checks = s.checks.map((c) => `<li class="${c.pass ? "pass" : "flag"}">${esc(c.label)}</li>`).join("");
   wrap.innerHTML =
     head("SEO & metadata", "On-page signals a crawler reads: title, description, canonical, headings, images, links and social cards.") +
-    `<div class="card ${scoreClass(s.score) === "good" ? "ok" : scoreClass(s.score) === "mid" ? "warn" : "bad"}">
+    `<div class="card ${toneClass(s.score)}">
       <h2>${s.score}/100</h2>
       <div class="meter"><i class="${scoreClass(s.score)}" style="width:${s.score}%"></i></div>
     </div>
@@ -461,7 +505,7 @@ function pagePerformance(r) {
     : "";
   wrap.innerHTML =
     head("Performance budget", "Static checks against the resource map — no headless browser, so these are rule-of-thumb budgets rather than real load timing.") +
-    `<div class="card ${scoreClass(p.score) === "good" ? "ok" : scoreClass(p.score) === "mid" ? "warn" : "bad"}">
+    `<div class="card ${toneClass(p.score)}">
       <h2>${p.score}/100</h2>
       <div class="meter"><i class="${scoreClass(p.score)}" style="width:${p.score}%"></i></div>
     </div>
@@ -489,7 +533,7 @@ function pageCrawlability(r) {
   const checks = cr.checks.map((c) => `<li class="${c.pass ? "pass" : "flag"}">${esc(c.label)}</li>`).join("");
   wrap.innerHTML =
     head("Crawlability", "Whether robots.txt and a sitemap exist, and whether the page just scanned is actually allowed to be crawled.") +
-    `<div class="card ${scoreClass(cr.score) === "good" ? "ok" : scoreClass(cr.score) === "mid" ? "warn" : "bad"}">
+    `<div class="card ${toneClass(cr.score)}">
       <h2>${cr.score}/100</h2>
       <div class="meter"><i class="${scoreClass(cr.score)}" style="width:${cr.score}%"></i></div>
     </div>
