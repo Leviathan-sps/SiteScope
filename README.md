@@ -2,7 +2,7 @@
 
 Give it any website, and it'll show you what it's built with, how secure its headers and cookies are, how well it's optimized for search engines, and every resource the page loads. Just run it once and you'll get a clean report that's easy to share with anyone.
 
-No dependencies, just Node.js 18 or newer. Runs pretty much anywhere.
+No dependencies.
 
 ```
 sitescope vercel.com
