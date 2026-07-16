@@ -13,6 +13,7 @@ import { analyzePerformance } from "./analyzers/performance.js";
 import { analyzeScore } from "./analyzers/score.js";
 import { scanPorts } from "./analyzers/ports.js";
 import { scanPaths } from "./analyzers/paths.js";
+import { analyzeVulns } from "./analyzers/vulnscan.js";
 
 // run all analyzers against url and build the report
 export async function analyze(url, opts = {}) {
@@ -26,6 +27,7 @@ export async function analyze(url, opts = {}) {
     analyzeCrawl(site, { timeout: opts.timeout }),
   ]);
 
+  const frameworks = detectFrameworks(site);
   const headers = analyzeHeaders(site);
   const cookies = analyzeCookies(site);
   const seo = analyzeSeo(site);
@@ -43,6 +45,10 @@ export async function analyze(url, opts = {}) {
     recon = { ports, paths };
   }
 
+  // passive vuln pass — reads what's above, sends nothing new. picks up more
+  // when recon ran, since exposed ports/paths feed into it.
+  const vulns = analyzeVulns({ frameworks, headers, recon });
+
   return {
     meta: {
       requestedUrl: site.requestedUrl,
@@ -56,7 +62,7 @@ export async function analyze(url, opts = {}) {
       // caller supplies the timestamp, keeps this fn pure-ish
       generatedAt: opts.generatedAt || new Date().toISOString(),
     },
-    frameworks: detectFrameworks(site),
+    frameworks,
     headers,
     cookies,
     seo,
@@ -65,6 +71,7 @@ export async function analyze(url, opts = {}) {
     network,
     infra,
     recon,
+    vulns,
     score,
   };
 }
