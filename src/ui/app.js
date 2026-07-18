@@ -276,6 +276,23 @@ function pageInfra(r) {
       </dl>
     </div>`;
 
+  // certificate — always present on https, no opt-in needed
+  const t = r.tls;
+  const tlsCard = t && t.reachable ? `
+    <div class="card ${t.expired || !t.authorized ? "bad" : t.expiringSoon ? "warn" : "ok"}">
+      <h2>TLS certificate <span class="hint">(${t.score}/100)</span></h2>
+      <dl class="kv">
+        <dt>Issued to</dt><dd class="mono">${esc(t.subject)}</dd>
+        <dt>Issued by</dt><dd>${esc(t.issuer)}</dd>
+        <dt>Expires</dt><dd>${t.validTo ? esc(t.validTo.slice(0, 10)) + ` <span class="dim">(${t.daysLeft} days)</span>` : "—"}</dd>
+        <dt>Protocol</dt><dd class="mono">${esc(t.protocol)}</dd>
+        <dt>Cipher</dt><dd class="mono">${esc(t.cipher)}</dd>
+        <dt>Covers</dt><dd class="mono">${(t.names || []).map(esc).join("<br>") || "—"}</dd>
+      </dl>
+      ${t.checks.filter((c) => !c.pass).map((c) => `<div class="flag bad" style="margin-top:8px">${esc(c.label)}</div>`).join("")}
+    </div>` : t && !t.https ? `
+    <div class="card bad"><h2>TLS certificate</h2><p class="dim">This site was served over plain HTTP — no certificate to inspect.</p></div>` : "";
+
   // Active recon — only present if the user opted into a deep scan.
   let portsCard, pathsCard, subsCard;
   if (rec.ports) {
@@ -330,7 +347,7 @@ function pageInfra(r) {
 
   wrap.innerHTML =
     head("Infrastructure", "Where the site is hosted and how it resolves — plus optional active checks of open ports, interesting paths and subdomains.") +
-    ipCard + dnsCard + reconBlock;
+    ipCard + dnsCard + tlsCard + reconBlock;
   return wrap;
 }
 
