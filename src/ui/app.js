@@ -178,6 +178,8 @@ const scoreClass = (n) => (n >= 70 ? "good" : n >= 45 ? "mid" : "poor");
 const gradeGood = (g) => (g === "A" || g === "B" ? "good" : g === "C" ? "mid" : "poor");
 // score band -> card border tone (used by the scored pages)
 const toneClass = (n) => (n >= 70 ? "ok" : n >= 45 ? "warn" : "bad");
+// leading severity marker so a critical finding jumps out of the table
+const sevIcon = (sev) => ({ critical: "🛑", high: "🔴", medium: "🟠", low: "🟡", info: "⚪" }[sev] || "•");
 function head(title, lead) { return `<div class="page-head"><h1>${esc(title)}</h1><p class="lead">${esc(lead)}</p></div>`; }
 function fmtBytes(n) {
   if (!n && n !== 0) return "—";
@@ -375,7 +377,7 @@ function pageVulns(r) {
 
   const v = r.vulns;
   const c = v.counts || {};
-  const chip = (sev) => `<span class="chip sev-${esc(sev)}">${esc(sev)}</span>`;
+  const chip = (sev) => `<span class="chip sev-${esc(sev)}">${sevIcon(sev)} ${esc(sev)}</span>`;
 
   // quick count strip so the headline reads before the table does
   const lowish = (c.low || 0) + (c.info || 0);

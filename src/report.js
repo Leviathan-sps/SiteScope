@@ -72,8 +72,8 @@ export function renderTerminal(report, { color: useColor = true } = {}) {
     }
     for (const f of v.findings) {
       const sev = sevColor(c, f.severity);
-      lines.push(`  ${sev}${f.severity.toUpperCase().padEnd(9)}${c.reset} ${c.bold}${f.title}${c.reset}${f.cve ? c.gray + " · " + f.cve + c.reset : ""}`);
-      lines.push(`    ${c.gray}${f.detail}${c.reset}`);
+      lines.push(`  ${sevIcon(f.severity)} ${sev}${f.severity.toUpperCase().padEnd(9)}${c.reset} ${c.bold}${f.title}${c.reset}${f.cve ? c.gray + " · " + f.cve + c.reset : ""}`);
+      lines.push(`     ${c.gray}${f.detail}${c.reset}`);
     }
   }
 
@@ -216,7 +216,7 @@ export function renderMarkdown(report) {
     if (v.total) {
       L.push("| Severity | Finding | CVE | Fix |");
       L.push("|---|---|---|---|");
-      for (const f of v.findings) L.push(`| ${f.severity} | ${f.title} — ${f.detail} | ${f.cve || "—"} | ${f.recommendation} |`);
+      for (const f of v.findings) L.push(`| ${sevIcon(f.severity)} ${f.severity} | ${f.title} — ${f.detail} | ${f.cve || "—"} | ${f.recommendation} |`);
     } else {
       L.push("_Nothing obvious. This is a passive check, not a full scan._");
     }
@@ -383,7 +383,7 @@ export function renderHtml(report) {
   <div class="card">
     ${vuln.total
       ? `<table><tr><th>Severity</th><th>Finding</th><th>CVE</th><th>Fix</th></tr>
-    ${vuln.findings.map((f) => `<tr><td><span class="b b-sev-${f.severity}">${esc(f.severity)}</span></td><td><b>${esc(f.title)}</b><br><span class="dim">${esc(f.detail)}</span></td><td class="dim">${esc(f.cve || "—")}</td><td class="dim">${esc(f.recommendation)}</td></tr>`).join("")}
+    ${vuln.findings.map((f) => `<tr><td><span class="b b-sev-${f.severity}">${sevIcon(f.severity)} ${esc(f.severity)}</span></td><td><b>${esc(f.title)}</b><br><span class="dim">${esc(f.detail)}</span></td><td class="dim">${esc(f.cve || "—")}</td><td class="dim">${esc(f.recommendation)}</td></tr>`).join("")}
   </table>`
       : '<p class="dim">Nothing obvious — this is a passive check, not a full scan.</p>'}
   </div>` : "";
@@ -467,6 +467,11 @@ function sevColor(c, sev) {
   if (sev === "critical" || sev === "high") return c.red;
   if (sev === "medium") return c.yellow;
   return c.gray;
+}
+// leading severity marker — a quick spot-check colour, not decoration.
+// shared by terminal / markdown / html so the ramp reads the same everywhere.
+function sevIcon(sev) {
+  return { critical: "🛑", high: "🔴", medium: "🟠", low: "🟡", info: "⚪" }[sev] || "•";
 }
 // markdown: append the failed checks as an "Issues:" bullet list, if any.
 // used by seo / performance / crawlability so the block isn't copy-pasted.
