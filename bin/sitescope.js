@@ -18,7 +18,8 @@ Options:
   --probe               HEAD-request linked resources for real sizes & status
   --scan-ports          check common service ports on the host (active scan)
   --scan-paths          probe common/interesting paths on the host (active scan)
-  --recon               shorthand for --scan-ports --scan-paths
+  --scan-subs           resolve common subdomain names on the domain (dns only)
+  --recon               shorthand for --scan-ports --scan-paths --scan-subs
   --no-geo              skip the IP geolocation / hosting lookup
   --timeout <ms>        request timeout in milliseconds       (default: 15000)
   --user-agent <ua>     override the User-Agent header
@@ -53,7 +54,7 @@ async function main() {
       timeout: opts.timeout,
       userAgent: opts.userAgent,
       geo: opts.geo,
-      recon: { ports: opts.scanPorts, paths: opts.scanPaths },
+      recon: { ports: opts.scanPorts, paths: opts.scanPaths, subs: opts.scanSubs },
     });
   } catch (err) {
     process.stderr.write(`\x1b[31mError:\x1b[0m ${err.message}\n`);
@@ -124,9 +125,13 @@ function parseArgs(argv) {
       case "--scan-paths":
         opts.scanPaths = true;
         break;
+      case "--scan-subs":
+        opts.scanSubs = true;
+        break;
       case "--recon":
         opts.scanPorts = true;
         opts.scanPaths = true;
+        opts.scanSubs = true;
         break;
       case "--no-geo":
         opts.geo = false;

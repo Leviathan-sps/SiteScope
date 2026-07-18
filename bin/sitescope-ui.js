@@ -52,6 +52,7 @@ const server = createServer(async (req, res) => {
         recon: {
           ports: u.searchParams.get("ports") === "1",
           paths: u.searchParams.get("paths") === "1",
+          subs: u.searchParams.get("subs") === "1",
         },
         timeout: Number(u.searchParams.get("timeout")) || 15000,
       });

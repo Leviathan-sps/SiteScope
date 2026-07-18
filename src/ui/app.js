@@ -60,7 +60,7 @@ async function scan(url) {
     if ($("probe-input").checked) qs.set("probe", "1");
     // recon control is absent on public instances — guard against null.
     const recon = $("recon-input");
-    if (recon && recon.checked) { qs.set("ports", "1"); qs.set("paths", "1"); }
+    if (recon && recon.checked) { qs.set("ports", "1"); qs.set("paths", "1"); qs.set("subs", "1"); }
     const res = await fetch("/api/analyze?" + qs);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || res.statusText);
@@ -277,7 +277,7 @@ function pageInfra(r) {
     </div>`;
 
   // Active recon — only present if the user opted into a deep scan.
-  let portsCard, pathsCard;
+  let portsCard, pathsCard, subsCard;
   if (rec.ports) {
     const p = rec.ports;
     const rows = p.open.map((port) =>
@@ -303,13 +303,33 @@ function pageInfra(r) {
       </div>`;
   }
 
-  const reconBlock = (portsCard || pathsCard)
-    ? (portsCard || "") + (pathsCard || "")
-    : `<div class="notice">Tick <strong>deep scan</strong> before scanning to check open ports and probe common paths on the host.
+  if (rec.subs) {
+    const sd = rec.subs;
+    const rows = sd.found.map((s) => {
+      const cls = s.kind === "sensitive" ? "bad" : s.kind === "surface" ? "warn" : "ok";
+      return `<tr><td class="mono">${esc(s.fqdn)}</td><td class="mono dim">${esc(s.addresses[0])}</td><td class="dim">${esc(s.cname || "—")}</td><td><span class="chip ${cls}">${esc(s.kind)}</span></td></tr>`;
+    }).join("");
+    // a wildcard zone answers for every name, so a hit list would be noise
+    const body = sd.wildcard
+      ? `<p class="dim">This domain uses wildcard DNS — every name resolves, so guessing can't tell real subdomains apart. Skipped.</p>`
+      : sd.found.length
+        ? `<table><thead><tr><th>Subdomain</th><th>Address</th><th>CNAME</th><th>Kind</th></tr></thead><tbody>${rows}</tbody></table>`
+        : `<p class="pass">None of the common subdomain names resolved.</p>`;
+    subsCard = `
+      <div class="card ${sd.exposedSensitive.length ? "bad" : ""}">
+        <h2>Subdomains <span class="hint">(${sd.found.length} found of ${sd.checked} names)</span></h2>
+        ${body}
+        ${sd.exposedSensitive.length ? `<div class="flag bad" style="margin-top:10px">${sd.exposedSensitive.length} non-production or internal name(s) publicly resolvable — ${esc(sd.exposedSensitive.map((x) => x.name).join(", "))}</div>` : ""}
+      </div>`;
+  }
+
+  const reconBlock = (portsCard || pathsCard || subsCard)
+    ? (portsCard || "") + (pathsCard || "") + (subsCard || "")
+    : `<div class="notice">Tick <strong>deep scan</strong> before scanning to check open ports, probe common paths and look for subdomains on the host.
        Active scanning sends real traffic — only run it against sites you own or are authorized to test.</div>`;
 
   wrap.innerHTML =
-    head("Infrastructure", "Where the site is hosted and how it resolves — plus optional active checks of open ports and interesting paths.") +
+    head("Infrastructure", "Where the site is hosted and how it resolves — plus optional active checks of open ports, interesting paths and subdomains.") +
     ipCard + dnsCard + reconBlock;
   return wrap;
 }

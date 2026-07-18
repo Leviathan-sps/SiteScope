@@ -13,6 +13,7 @@ import { analyzePerformance } from "./analyzers/performance.js";
 import { analyzeScore } from "./analyzers/score.js";
 import { scanPorts } from "./analyzers/ports.js";
 import { scanPaths } from "./analyzers/paths.js";
+import { scanSubdomains } from "./analyzers/subdomains.js";
 import { analyzeVulns } from "./analyzers/vulnscan.js";
 
 // run all analyzers against url and build the report
@@ -34,15 +35,16 @@ export async function analyze(url, opts = {}) {
   const performance = analyzePerformance(site, network);
   const score = analyzeScore({ headers, seo, cookies, performance, crawl });
 
-  // active recon (ports + paths) is opt-in — it sends real traffic
+  // active recon (ports + paths + subdomains) is opt-in — it sends real traffic
   let recon = null;
   const want = opts.recon || {};
-  if (want.ports || want.paths) {
-    const [ports, paths] = await Promise.all([
+  if (want.ports || want.paths || want.subs) {
+    const [ports, paths, subs] = await Promise.all([
       want.ports && infra.primaryIp ? scanPorts(infra.primaryIp) : Promise.resolve(null),
       want.paths ? scanPaths(site.finalUrl, { userAgent: opts.userAgent }) : Promise.resolve(null),
+      want.subs && infra.host ? scanSubdomains(infra.host) : Promise.resolve(null),
     ]);
-    recon = { ports, paths };
+    recon = { ports, paths, subs };
   }
 
   // vuln check rides along with the deep scan — only runs when recon did.
