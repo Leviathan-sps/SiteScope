@@ -71,7 +71,7 @@ const WILDCARD_PROBE = "sitescope-wildcard-probe-x9f2";
 
 /**
  * @param {string} host
- * @param {{ concurrency?:number }} [opts]
+ * @param {{ concurrency?:number, certNames?:string[] }} [opts]
  */
 export async function scanSubdomains(host, opts = {}) {
   const concurrency = opts.concurrency || 8;
@@ -83,7 +83,11 @@ export async function scanSubdomains(host, opts = {}) {
   const wildcard = await resolves(`${WILDCARD_PROBE}.${base}`);
   if (wildcard) return { ...empty(base), wildcard: true };
 
-  const queue = [...SUBDOMAINS];
+  // names lifted off the certificate are authoritative, not guesses — the
+  // server told us about them. worth far more than any wordlist entry.
+  const fromCert = certCandidates(opts.certNames || [], base);
+  const queue = [...SUBDOMAINS, ...fromCert];
+
   const results = [];
   async function worker() {
     let item;
@@ -98,17 +102,43 @@ export async function scanSubdomains(host, opts = {}) {
   }
   await Promise.all(Array.from({ length: concurrency }, worker));
 
-  // preserve the declared order so reports are stable run to run
+  // preserve the declared order so reports are stable run to run; cert-sourced
+  // names have no declared position so they sort to the end, alphabetically.
   const order = new Map(SUBDOMAINS.map((s, i) => [s.name, i]));
-  results.sort((a, b) => order.get(a.name) - order.get(b.name));
+  const rank = (r) => (order.has(r.name) ? order.get(r.name) : SUBDOMAINS.length);
+  results.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
 
   return {
     domain: base,
     wildcard: false,
-    checked: SUBDOMAINS.length,
+    checked: SUBDOMAINS.length + fromCert.length,
+    fromCert: fromCert.length,
     found: results,
     exposedSensitive: results.filter((r) => r.kind === "sensitive"),
   };
+}
+
+// turn cert SAN entries into extra candidates. wildcards can't be resolved,
+// and anything outside the base domain isn't ours to scan.
+function certCandidates(names, base) {
+  const known = new Set(SUBDOMAINS.map((s) => s.name));
+  const suffix = `.${base}`;
+  const out = new Map();
+  for (const raw of names) {
+    const n = String(raw || "").toLowerCase().trim();
+    if (!n.endsWith(suffix) || n.startsWith("*")) continue;
+    const label = n.slice(0, -suffix.length);
+    if (!label || known.has(label) || out.has(label)) continue;
+    out.set(label, { name: label, kind: classify(label), source: "cert" });
+  }
+  return [...out.values()];
+}
+
+// reuse the wordlist's judgement for cert names that look non-production
+function classify(label) {
+  const head = label.split(".").pop();
+  const match = SUBDOMAINS.find((s) => s.name === head);
+  return match ? match.kind : "info";
 }
 
 // dns.lookup goes through the OS resolver (same path as fetch), so it still
@@ -131,5 +161,5 @@ function baseDomain(host) {
 }
 
 function empty(domain) {
-  return { domain, wildcard: false, checked: 0, found: [], exposedSensitive: [] };
+  return { domain, wildcard: false, checked: 0, fromCert: 0, found: [], exposedSensitive: [] };
 }

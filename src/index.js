@@ -45,7 +45,9 @@ export async function analyze(url, opts = {}) {
     const [ports, paths, subs] = await Promise.all([
       want.ports && infra.primaryIp ? scanPorts(infra.primaryIp) : Promise.resolve(null),
       want.paths ? scanPaths(site.finalUrl, { userAgent: opts.userAgent }) : Promise.resolve(null),
-      want.subs && infra.host ? scanSubdomains(infra.host) : Promise.resolve(null),
+      want.subs && infra.host
+        ? scanSubdomains(infra.host, { certNames: (tlsInfo && tlsInfo.names) || [] })
+        : Promise.resolve(null),
     ]);
     recon = { ports, paths, subs };
   }
