@@ -9,6 +9,7 @@ import { analyzeSeo } from "./analyzers/seo.js";
 import { analyzeNetwork } from "./analyzers/network.js";
 import { analyzeInfra } from "./analyzers/infra.js";
 import { analyzeCrawl } from "./analyzers/crawl.js";
+import { analyzeTls } from "./analyzers/tls.js";
 import { analyzePerformance } from "./analyzers/performance.js";
 import { analyzeScore } from "./analyzers/score.js";
 import { scanPorts } from "./analyzers/ports.js";
@@ -22,10 +23,12 @@ export async function analyze(url, opts = {}) {
 
   // passive infra (dns + optional geo/asn), the network map, and the
   // robots.txt/sitemap check are all independent of each other
-  const [network, infra, crawl] = await Promise.all([
+  // the tls handshake is passive and cheap, so it runs on every scan
+  const [network, infra, crawl, tlsInfo] = await Promise.all([
     analyzeNetwork(site, { probe: opts.probe, timeout: opts.timeout }),
     analyzeInfra(site, { geo: opts.geo !== false }),
     analyzeCrawl(site, { timeout: opts.timeout }),
+    analyzeTls(site, { timeout: opts.timeout }),
   ]);
 
   const frameworks = detectFrameworks(site);
@@ -72,6 +75,7 @@ export async function analyze(url, opts = {}) {
     crawl,
     network,
     infra,
+    tls: tlsInfo,
     recon,
     vulns,
     score,

@@ -98,6 +98,18 @@ export function renderTerminal(report, { color: useColor = true } = {}) {
     if (inf.mx.length) kv("Mail (MX)", inf.mx.slice(0, 3).join(", "));
   }
 
+  if (report.tls && report.tls.reachable) {
+    const t = report.tls;
+    h(`🔐 TLS certificate  ${scoreColor(c, t.score)} ${t.score}/100`);
+    kv("Issued to", t.subject);
+    kv("Issued by", t.issuer);
+    kv("Expires", t.validTo ? `${t.validTo.slice(0, 10)} (${t.daysLeft} days)` : null);
+    kv("Protocol", t.protocol);
+    kv("Cipher", t.cipher);
+    if (t.names.length > 1) kv("Also covers", `${t.names.length} names`);
+    for (const ch of t.checks.filter((c2) => !c2.pass)) lines.push(`  ${c.red}✘ ${ch.label}${c.reset}`);
+  }
+
   if (report.recon && report.recon.ports) {
     const p = report.recon.ports;
     h(`🔌 Open ports (${p.open.length}/${p.scanned})`);
@@ -253,6 +265,17 @@ export function renderMarkdown(report) {
     L.push("");
   }
 
+  if (report.tls && report.tls.reachable) {
+    const t = report.tls;
+    L.push(`## 🔐 TLS certificate — ${t.score}/100`);
+    L.push(`- **Issued to:** ${t.subject || "—"}`);
+    L.push(`- **Issued by:** ${t.issuer || "—"}`);
+    if (t.validTo) L.push(`- **Expires:** ${t.validTo.slice(0, 10)} (${t.daysLeft} days)`);
+    L.push(`- **Protocol:** ${t.protocol || "—"} · **Cipher:** ${t.cipher || "—"}`);
+    pushIssues(L, t.checks);
+    L.push("");
+  }
+
   if (report.recon && report.recon.ports) {
     const p = report.recon.ports;
     L.push(`## 🔌 Open ports (${p.open.length}/${p.scanned})`);
@@ -376,6 +399,19 @@ export function renderHtml(report) {
     ${inf.mx.length ? `<tr><td>Mail (MX)</td><td>${esc(inf.mx.join(", "))}</td></tr>` : ""}
   </table></div>` : "";
 
+  const t = report.tls;
+  const tlsSection = t && t.reachable ? `
+  <h2>🔐 TLS certificate — ${t.score}/100</h2>
+  <div class="card"><table>
+    <tr><td>Issued to</td><td>${esc(t.subject)}</td></tr>
+    <tr><td>Issued by</td><td>${esc(t.issuer)}</td></tr>
+    <tr><td>Expires</td><td>${t.validTo ? esc(t.validTo.slice(0, 10)) + ` (${t.daysLeft} days)` : "—"}</td></tr>
+    <tr><td>Protocol</td><td>${esc(t.protocol)}</td></tr>
+    <tr><td>Cipher</td><td>${esc(t.cipher)}</td></tr>
+  </table>
+    ${checkList(t.checks)}
+  </div>` : "";
+
   const rec = report.recon || {};
   const portsSection = rec.ports ? `
   <h2>🔌 Open ports (${rec.ports.open.length}/${rec.ports.scanned})</h2>
@@ -474,6 +510,7 @@ ${REPORT_CSS}</style></head>
   ${perfSection}
   ${crawlSection}
   ${infraSection}
+  ${tlsSection}
   ${portsSection}
   ${pathsSection}
   ${subsSection}
