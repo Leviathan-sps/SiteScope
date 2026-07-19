@@ -9,7 +9,9 @@
   },
   "scripts": {
     "start": "node bin/sitescope.js",
-    "ui": "node bin/sitescope-ui.js"
+    "ui": "node bin/sitescope-ui.js",
+    "ui:next": "npm --prefix ui-next run dev",
+    "ui:next:build": "npm --prefix ui-next run build"
   },
   "keywords": [
     "cli",

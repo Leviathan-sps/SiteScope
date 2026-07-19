@@ -4,3 +4,5 @@ node_modules/
 report.html
 report.md
 report.json
+ui-next/dist/
+ui-next/node_modules/
