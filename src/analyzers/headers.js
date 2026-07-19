@@ -53,6 +53,57 @@ const SECURITY_HEADERS = [
   // },
 ];
 
+// directives that decide whether a csp actually stops anything. without
+// these a policy can look long and still block nothing useful.
+const KEY_DIRECTIVES = ["default-src", "script-src", "object-src", "base-uri", "frame-ancestors"];
+
+// per spec most fetch directives inherit from default-src when absent, so a
+// policy with default-src 'none' is not missing them. base-uri and
+// frame-ancestors do NOT inherit — those have to be set explicitly.
+const INHERITS_DEFAULT = new Set(["script-src", "object-src", "style-src", "img-src", "font-src", "connect-src", "media-src", "frame-src", "child-src", "worker-src", "manifest-src"]);
+
+// a csp is only as strong as its weakest source list, so the header being
+// present says very little on its own — this pulls it apart directive by
+// directive and names what actually undermines it.
+function parseCsp(value) {
+  if (!value) return null;
+
+  const directives = {};
+  for (const part of value.split(";")) {
+    const bits = part.trim().split(/\s+/).filter(Boolean);
+    if (!bits.length) continue;
+    directives[bits[0].toLowerCase()] = bits.slice(1);
+  }
+
+  const sources = Object.entries(directives)
+    .filter(([name]) => name !== "report-uri" && name !== "report-to");
+  const has = (token) => sources.some(([, vals]) => vals.some((v) => v.toLowerCase() === token));
+  // a bare "*" or "https:" in a fetch directive allows essentially anything
+  const wildcard = sources.filter(([, vals]) =>
+    vals.some((v) => v === "*" || v === "https:" || v === "http:"));
+
+  // a directive isn't "missing" if default-src is set and it inherits from it
+  const missingKey = KEY_DIRECTIVES.filter((d) => {
+    if (directives[d]) return false;
+    return !(directives["default-src"] && INHERITS_DEFAULT.has(d));
+  });
+
+  const weaknesses = [];
+  if (has("'unsafe-inline'")) weaknesses.push("allows 'unsafe-inline' — inline scripts still run");
+  if (has("'unsafe-eval'")) weaknesses.push("allows 'unsafe-eval' — eval() still runs");
+  if (wildcard.length) weaknesses.push(`wildcard source in ${wildcard.map(([n]) => n).join(", ")}`);
+  for (const d of missingKey) weaknesses.push(`no ${d} directive`);
+
+  return {
+    raw: value,
+    directives,
+    count: Object.keys(directives).length,
+    weaknesses,
+    // nothing to complain about is the only way to call a policy strict
+    strict: weaknesses.length === 0,
+  };
+}
+
 // grade headers and pull out server/caching/transfer info
 export function analyzeHeaders(site) {
   const headers = lowerKeys(site.headers || {});
@@ -84,6 +135,7 @@ export function analyzeHeaders(site) {
     grade: letterGrade(score),
     score,
     security,
+    csp: parseCsp(headers["content-security-policy"]),
     server: {
       server: headers["server"] || null,
       poweredBy: headers["x-powered-by"] || null,

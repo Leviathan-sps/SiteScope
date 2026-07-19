@@ -401,6 +401,13 @@ function pageSecurity(r) {
       <h2>Header by header</h2>
       <table class="rows"><tbody>${rows}</tbody></table>
     </div>
+    ${h.csp ? `<div class="card ${h.csp.strict ? "ok" : "warn"}">
+      <h2>Content-Security-Policy <span class="hint">(${h.csp.count} directives)</span></h2>
+      ${h.csp.weaknesses.length
+        ? h.csp.weaknesses.map((w) => `<div class="flag warn" style="margin-top:6px">${esc(w)}</div>`).join("")
+        : `<p class="pass">No obvious weaknesses in the policy.</p>`}
+      <details style="margin-top:10px"><summary class="dim">Raw policy</summary><p class="mono dim" style="word-break:break-all">${esc(h.csp.raw)}</p></details>
+    </div>` : `<div class="card bad"><h2>Content-Security-Policy</h2><p class="dim">No CSP header — the page has no script-source restrictions at all.</p></div>`}
     <div class="card">
       <h2>Server &amp; transfer</h2>
       <dl class="kv">

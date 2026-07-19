@@ -64,6 +64,12 @@ export function renderTerminal(report, { color: useColor = true } = {}) {
     lines.push(`  ${icon} ${s.label}${s.note ? c.gray + " — " + s.note + c.reset : ""}`);
   }
 
+  if (report.headers.csp) {
+    const p = report.headers.csp;
+    lines.push(`  ${c.dim}CSP: ${p.count} directives${p.strict ? c.green + " · strict" : ""}${c.reset}`);
+    for (const w of p.weaknesses) lines.push(`    ${c.yellow}▲ ${w}${c.reset}`);
+  }
+
   if (report.vulns) {
     const v = report.vulns;
     h(`🛡  Vulnerabilities  ${riskColor(c, v.risk)} ${v.risk} (${v.total})`);
@@ -246,6 +252,14 @@ export function renderMarkdown(report) {
   L.push("");
   L.push(`**Server:** ${report.headers.server.server || "—"}  ·  **Powered by:** ${report.headers.server.poweredBy || "—"}  ·  **Compression:** ${report.headers.transfer.contentEncoding || "—"}`);
   L.push("");
+
+  if (report.headers.csp) {
+    const p = report.headers.csp;
+    L.push(`### Content-Security-Policy — ${p.count} directives${p.strict ? " (strict)" : ""}`);
+    if (p.weaknesses.length) for (const w of p.weaknesses) L.push(`- ⚠️ ${w}`);
+    else L.push("- ✅ no obvious weaknesses");
+    L.push("");
+  }
 
   if (report.vulns) {
     const v = report.vulns;
@@ -482,6 +496,15 @@ export function renderHtml(report) {
     ${checkList(cr.checks)}
   </div>` : "";
 
+  const csp = report.headers.csp;
+  const cspSection = csp ? `
+  <h3>Content-Security-Policy — ${csp.count} directives${csp.strict ? " (strict)" : ""}</h3>
+  <div class="card">
+    ${csp.weaknesses.length
+      ? `<ul class="checks">${csp.weaknesses.map((w) => `<li class="fail">${esc(w)}</li>`).join("")}</ul>`
+      : '<p class="dim">No obvious weaknesses in the policy.</p>'}
+  </div>` : "";
+
   const vuln = report.vulns;
   const vulnSection = vuln ? `
   <h2>🛡️ Vulnerabilities — ${esc(vuln.risk)} risk (${vuln.total})</h2>
@@ -524,6 +547,7 @@ ${REPORT_CSS}</style></head>
 
   <h2>🔒 Security headers — ${esc(report.headers.grade)} (${report.headers.score}/100)</h2>
   <div class="card"><table><tr><th>Header</th><th>Status</th><th>Note</th></tr>${secRows}</table></div>
+  ${cspSection}
   ${vulnSection}
 
   <h2>🍪 Cookies (${report.cookies.count})</h2>
