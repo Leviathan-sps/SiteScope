@@ -110,6 +110,16 @@ export function renderTerminal(report, { color: useColor = true } = {}) {
     for (const ch of t.checks.filter((c2) => !c2.pass)) lines.push(`  ${c.red}✘ ${ch.label}${c.reset}`);
   }
 
+  if (report.dns && report.dns.available) {
+    const d = report.dns;
+    h(`📮 Domain security  ${scoreColor(c, d.score)} ${d.score}/100`);
+    kv("SPF", d.spf ? d.spf.all || "present" : null);
+    kv("DMARC", d.dmarc ? `p=${d.dmarc.policy}` : null);
+    kv("DKIM", d.dkim.present ? d.dkim.found.join(", ") : null);
+    kv("CAA", d.caa.length ? d.caa.join(", ") : null);
+    for (const ch of d.checks.filter((c2) => !c2.pass)) lines.push(`  ${c.yellow}▲ ${ch.label}${c.reset}`);
+  }
+
   if (report.recon && report.recon.ports) {
     const p = report.recon.ports;
     h(`🔌 Open ports (${p.open.length}/${p.scanned})`);
@@ -276,6 +286,17 @@ export function renderMarkdown(report) {
     L.push("");
   }
 
+  if (report.dns && report.dns.available) {
+    const d = report.dns;
+    L.push(`## 📮 Domain security — ${d.score}/100`);
+    L.push(`- **SPF:** ${d.spf ? `\`${d.spf.record}\`` : "not published"}`);
+    L.push(`- **DMARC:** ${d.dmarc ? `p=${d.dmarc.policy}` : "not published"}`);
+    L.push(`- **DKIM:** ${d.dkim.present ? d.dkim.found.join(", ") : "no common selector found"}`);
+    L.push(`- **CAA:** ${d.caa.length ? d.caa.join(", ") : "none"}`);
+    pushIssues(L, d.checks);
+    L.push("");
+  }
+
   if (report.recon && report.recon.ports) {
     const p = report.recon.ports;
     L.push(`## 🔌 Open ports (${p.open.length}/${p.scanned})`);
@@ -412,6 +433,18 @@ export function renderHtml(report) {
     ${checkList(t.checks)}
   </div>` : "";
 
+  const d = report.dns;
+  const dnsSection = d && d.available ? `
+  <h2>📮 Domain security — ${d.score}/100</h2>
+  <div class="card"><table>
+    <tr><td>SPF</td><td>${d.spf ? esc(d.spf.record) : '<span class="dim">not published</span>'}</td></tr>
+    <tr><td>DMARC</td><td>${d.dmarc ? "p=" + esc(d.dmarc.policy) : '<span class="dim">not published</span>'}</td></tr>
+    <tr><td>DKIM</td><td>${d.dkim.present ? esc(d.dkim.found.join(", ")) : '<span class="dim">no common selector found</span>'}</td></tr>
+    <tr><td>CAA</td><td>${d.caa.length ? esc(d.caa.join(", ")) : '<span class="dim">none</span>'}</td></tr>
+  </table>
+    ${checkList(d.checks)}
+  </div>` : "";
+
   const rec = report.recon || {};
   const portsSection = rec.ports ? `
   <h2>🔌 Open ports (${rec.ports.open.length}/${rec.ports.scanned})</h2>
@@ -511,6 +544,7 @@ ${REPORT_CSS}</style></head>
   ${crawlSection}
   ${infraSection}
   ${tlsSection}
+  ${dnsSection}
   ${portsSection}
   ${pathsSection}
   ${subsSection}

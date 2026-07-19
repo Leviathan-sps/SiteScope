@@ -24,12 +24,21 @@ export async function analyzeDns(host, opts = {}) {
   const domain = apex(host);
   if (!domain) return null;
 
-  const [txt, dmarcTxt, caa, dkim] = await Promise.all([
-    dns.resolveTxt(domain).catch(() => []),
-    dns.resolveTxt(`_dmarc.${domain}`).catch(() => []),
-    dns.resolveCaa(domain).catch(() => []),
+  // NXDOMAIN/ENODATA is a real answer ("no such record"); a transport failure
+  // is not. without this split we'd report "SPF not published" on any network
+  // that blocks direct dns queries, which is a lie.
+  const txtRes = await settle(dns.resolveTxt(domain));
+  if (txtRes.unavailable) return { domain, available: false, checks: [] };
+
+  const [dmarcRes, caaRes, dkim] = await Promise.all([
+    settle(dns.resolveTxt(`_dmarc.${domain}`)),
+    settle(dns.resolveCaa(domain)),
     findDkim(domain),
   ]);
+
+  const txt = txtRes.value;
+  const dmarcTxt = dmarcRes.value;
+  const caa = caaRes.value;
 
   const flat = txt.map((r) => r.join(""));
   const spfRecord = flat.find((r) => /^v=spf1/i.test(r)) || null;
@@ -51,6 +60,7 @@ export async function analyzeDns(host, opts = {}) {
 
   return {
     domain,
+    available: true,
     spf,
     dmarc,
     dkim,
@@ -100,6 +110,16 @@ async function findDkim(domain) {
   );
   const found = hits.filter(Boolean);
   return { selectorsTried: DKIM_SELECTORS.length, found, present: found.length > 0 };
+}
+
+// "no such record" answers are real data; anything else means we couldn't ask.
+const NO_RECORD = new Set(["ENOTFOUND", "ENODATA", "NXDOMAIN"]);
+async function settle(promise) {
+  try {
+    return { value: await promise, unavailable: false };
+  } catch (e) {
+    return { value: [], unavailable: !NO_RECORD.has(e.code) };
+  }
 }
 
 function fmtCaa(r) {

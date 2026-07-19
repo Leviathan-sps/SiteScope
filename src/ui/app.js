@@ -293,6 +293,20 @@ function pageInfra(r) {
     </div>` : t && !t.https ? `
     <div class="card bad"><h2>TLS certificate</h2><p class="dim">This site was served over plain HTTP — no certificate to inspect.</p></div>` : "";
 
+  // spf/dmarc/dkim/caa — whether this domain can be spoofed in mail
+  const dn = r.dns;
+  const dnsSecCard = dn && dn.available ? `
+    <div class="card ${dn.score >= 80 ? "ok" : dn.score >= 40 ? "warn" : "bad"}">
+      <h2>Domain security <span class="hint">(${dn.score}/100)</span></h2>
+      <dl class="kv">
+        <dt>SPF</dt><dd class="mono">${dn.spf ? esc(dn.spf.record) : '<span class="dim">not published</span>'}</dd>
+        <dt>DMARC</dt><dd class="mono">${dn.dmarc ? "p=" + esc(dn.dmarc.policy) : '<span class="dim">not published</span>'}</dd>
+        <dt>DKIM</dt><dd class="mono">${dn.dkim.present ? esc(dn.dkim.found.join(", ")) : '<span class="dim">no common selector found</span>'}</dd>
+        <dt>CAA</dt><dd class="mono">${dn.caa.length ? dn.caa.map(esc).join("<br>") : '<span class="dim">none</span>'}</dd>
+      </dl>
+      ${dn.checks.filter((c) => !c.pass).map((c) => `<div class="flag warn" style="margin-top:8px">${esc(c.label)}</div>`).join("")}
+    </div>` : "";
+
   // Active recon — only present if the user opted into a deep scan.
   let portsCard, pathsCard, subsCard;
   if (rec.ports) {
@@ -347,7 +361,7 @@ function pageInfra(r) {
 
   wrap.innerHTML =
     head("Infrastructure", "Where the site is hosted and how it resolves — plus optional active checks of open ports, interesting paths and subdomains.") +
-    ipCard + dnsCard + tlsCard + reconBlock;
+    ipCard + dnsCard + tlsCard + dnsSecCard + reconBlock;
   return wrap;
 }
 

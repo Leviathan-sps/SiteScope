@@ -10,6 +10,7 @@ import { analyzeNetwork } from "./analyzers/network.js";
 import { analyzeInfra } from "./analyzers/infra.js";
 import { analyzeCrawl } from "./analyzers/crawl.js";
 import { analyzeTls } from "./analyzers/tls.js";
+import { analyzeDns } from "./analyzers/dnssec.js";
 import { analyzePerformance } from "./analyzers/performance.js";
 import { analyzeScore } from "./analyzers/score.js";
 import { scanPorts } from "./analyzers/ports.js";
@@ -17,18 +18,27 @@ import { scanPaths } from "./analyzers/paths.js";
 import { scanSubdomains } from "./analyzers/subdomains.js";
 import { analyzeVulns } from "./analyzers/vulnscan.js";
 
+function safeHostname(url) {
+  try { return new URL(url).hostname; } catch { return ""; }
+}
+
 // run all analyzers against url and build the report
 export async function analyze(url, opts = {}) {
   const site = await fetchSite(url, opts);
 
   // passive infra (dns + optional geo/asn), the network map, and the
   // robots.txt/sitemap check are all independent of each other
-  // the tls handshake is passive and cheap, so it runs on every scan
-  const [network, infra, crawl, tlsInfo] = await Promise.all([
+  // the hostname is needed before infra resolves, so pull it off the url
+  const hostname = safeHostname(site.finalUrl);
+
+  // the tls handshake and the dns record lookups are both passive and cheap,
+  // so they run on every scan alongside the rest
+  const [network, infra, crawl, tlsInfo, dnsRecords] = await Promise.all([
     analyzeNetwork(site, { probe: opts.probe, timeout: opts.timeout }),
     analyzeInfra(site, { geo: opts.geo !== false }),
     analyzeCrawl(site, { timeout: opts.timeout }),
     analyzeTls(site, { timeout: opts.timeout }),
+    analyzeDns(hostname, { timeout: opts.timeout }),
   ]);
 
   const frameworks = detectFrameworks(site);
@@ -78,6 +88,7 @@ export async function analyze(url, opts = {}) {
     network,
     infra,
     tls: tlsInfo,
+    dns: dnsRecords,
     recon,
     vulns,
     score,
