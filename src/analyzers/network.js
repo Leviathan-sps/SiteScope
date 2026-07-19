@@ -81,7 +81,27 @@ export async function analyzeNetwork(site, opts = {}) {
     byHost,
     thirdPartyHosts: [...new Set(thirdParty.map((r) => r.host))].sort(),
     resources,
+    mixedContent: findMixedContent(resources, base),
     probed,
+  };
+}
+
+// resource kinds a browser refuses to load over http on an https page. the
+// rest (images, fonts, media) still load but downgrade the padlock.
+const ACTIVE_TYPES = new Set(["script", "stylesheet", "frame", "worker", "fetch"]);
+
+// an https page that references http:// sub-resources. the active ones are
+// simply blocked by every current browser, so this is a real breakage, not
+// just a warning.
+function findMixedContent(resources, base) {
+  const secure = /^https:/i.test(base);
+  if (!secure) return { applicable: false, total: 0, active: [], passive: [] };
+  const insecure = resources.filter((r) => /^http:\/\//i.test(r.url));
+  return {
+    applicable: true,
+    total: insecure.length,
+    active: insecure.filter((r) => ACTIVE_TYPES.has(r.type)),
+    passive: insecure.filter((r) => !ACTIVE_TYPES.has(r.type)),
   };
 }
 
