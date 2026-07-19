@@ -36,7 +36,7 @@ const severityRank = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
 
 // run the passive checks and roll them into one findings list.
 // expects the already-analyzed pieces: frameworks[], headers{}, recon{}.
-export function analyzeVulns({ frameworks = [], headers = {}, recon = null } = {}) {
+export function analyzeVulns({ frameworks = [], headers = {}, recon = null, network = null, tls = null } = {}) {
   const findings = [];
 
   // 1. outdated libraries with a known issue in their version range
@@ -91,6 +91,81 @@ export function analyzeVulns({ frameworks = [], headers = {}, recon = null } = {
 
   // 4. stack disclosure — low on its own, but it hands an attacker the roadmap
   for (const d of stackDisclosure(headers, frameworks)) findings.push(d);
+
+  // 5. http sub-resources on an https page. the active ones don't just warn,
+  // browsers refuse to load them, so the page is already partly broken.
+  const mixed = network && network.mixedContent;
+  if (mixed && mixed.applicable && mixed.total) {
+    if (mixed.active.length) {
+      findings.push({
+        id: "mixed-content-active",
+        title: `${mixed.active.length} script/stylesheet loaded over http`,
+        severity: "high",
+        component: mixed.active[0].url,
+        detail: "browsers block active mixed content outright — these resources are not loading for visitors.",
+        recommendation: "serve these over https, or use protocol-relative paths",
+        cve: null,
+      });
+    }
+    if (mixed.passive.length) {
+      findings.push({
+        id: "mixed-content-passive",
+        title: `${mixed.passive.length} image/font loaded over http`,
+        severity: "low",
+        component: mixed.passive[0].url,
+        detail: "passive mixed content still loads but drops the padlock and can be tampered with in transit.",
+        recommendation: "switch these references to https",
+        cve: null,
+      });
+    }
+  }
+
+  // 6. certificate problems worth escalating out of the tls section
+  if (tls && tls.reachable) {
+    if (tls.expired) {
+      findings.push({
+        id: "cert-expired",
+        title: "TLS certificate has expired",
+        severity: "critical",
+        component: tls.subject || tls.host,
+        detail: `expired ${Math.abs(tls.daysLeft)} days ago — visitors get a full-page browser warning.`,
+        recommendation: "renew the certificate and automate renewal",
+        cve: null,
+      });
+    } else if (tls.expiringSoon) {
+      findings.push({
+        id: "cert-expiring",
+        title: `TLS certificate expires in ${tls.daysLeft} days`,
+        severity: "medium",
+        component: tls.subject || tls.host,
+        detail: "short-dated certificates are the most common cause of sudden site-wide outages.",
+        recommendation: "renew now and set up automatic renewal",
+        cve: null,
+      });
+    }
+    if (tls.selfSigned || !tls.authorized) {
+      findings.push({
+        id: "cert-untrusted",
+        title: tls.selfSigned ? "TLS certificate is self-signed" : "TLS certificate chain is not trusted",
+        severity: "high",
+        component: tls.issuer || tls.host,
+        detail: tls.authorizationError || "no public CA vouches for this certificate.",
+        recommendation: "use a certificate from a trusted CA (let's encrypt is free)",
+        cve: null,
+      });
+    }
+    if (tls.weakProtocol) {
+      findings.push({
+        id: "tls-weak-protocol",
+        title: `Negotiated ${tls.protocol}`,
+        severity: "medium",
+        component: tls.protocol,
+        detail: "tls 1.0/1.1 are deprecated and rejected by current browsers.",
+        recommendation: "require tls 1.2 or newer",
+        cve: null,
+      });
+    }
+  }
 
   // worst first, so the scary stuff sits at the top of the report
   findings.sort((a, b) => severityRank[b.severity] - severityRank[a.severity]);

@@ -64,7 +64,9 @@ export async function analyze(url, opts = {}) {
 
   // vuln check rides along with the deep scan — only runs when recon did.
   // it sends nothing new itself, just reads the frameworks/headers/recon above.
-  const vulns = recon ? analyzeVulns({ frameworks, headers, recon }) : null;
+  const vulns = recon
+    ? analyzeVulns({ frameworks, headers, recon, network, tls: tlsInfo })
+    : null;
 
   return {
     meta: {
