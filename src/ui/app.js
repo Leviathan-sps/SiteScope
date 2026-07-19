@@ -212,6 +212,17 @@ function pageOverview(r) {
       <h2>Top issues</h2>
       <ul class="checks">${score.topIssues.map((i) => `<li class="flag">[${esc(i.source)}] ${esc(i.label)}</li>`).join("")}</ul>
     </div>` : ""}
+    ${(r.meta.redirectChain || []).length ? `
+    <div class="card ${r.meta.insecureHop ? "bad" : ""}">
+      <h2>Redirect chain <span class="hint">(${r.meta.redirectChain.length} hop${r.meta.redirectChain.length > 1 ? "s" : ""})</span></h2>
+      <table><thead><tr><th>Status</th><th>To</th><th>Note</th></tr></thead><tbody>
+        ${r.meta.redirectChain.map((hop) => {
+          const note = [hop.downgrade && "https → http", hop.crossHost && "cross-host"].filter(Boolean).join(", ");
+          return `<tr><td><span class="chip ${hop.downgrade ? "bad" : "ok"}">${hop.status}</span></td><td class="mono">${esc(hop.to)}</td><td class="dim">${esc(note || "—")}</td></tr>`;
+        }).join("")}
+      </tbody></table>
+      ${r.meta.insecureHop ? `<div class="flag bad" style="margin-top:10px">This chain drops from https to http — anything sent on that hop travels in the clear.</div>` : ""}
+    </div>` : ""}
     <div class="card accent">
       <h2>At a glance</h2>
       <dl class="kv">

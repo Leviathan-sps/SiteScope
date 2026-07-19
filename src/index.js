@@ -73,6 +73,8 @@ export async function analyze(url, opts = {}) {
       requestedUrl: site.requestedUrl,
       finalUrl: site.finalUrl,
       redirected: site.redirected,
+      redirectChain: site.redirectChain || [],
+      insecureHop: !!site.insecureHop,
       status: site.status,
       statusText: site.statusText,
       contentType: site.contentType,

@@ -44,6 +44,15 @@ export function renderTerminal(report, { color: useColor = true } = {}) {
     `${c.gray}status ${statusColor(c, report.meta.status)} · ${report.meta.bytes} bytes · ${report.meta.elapsedMs}ms${report.meta.redirected ? " · redirected" : ""}${c.reset}`
   );
 
+  const chain = report.meta.redirectChain || [];
+  if (chain.length) {
+    lines.push(`${c.dim}redirects:${c.reset} ${chain.length} hop${chain.length > 1 ? "s" : ""}`);
+    for (const hop of chain) {
+      const mark = hop.downgrade ? `${c.red}↓${c.reset}` : hop.crossHost ? `${c.yellow}→${c.reset}` : `${c.gray}→${c.reset}`;
+      lines.push(`  ${c.gray}${hop.status}${c.reset} ${mark} ${hop.to}${hop.downgrade ? `${c.red}  (https → http)${c.reset}` : ""}`);
+    }
+  }
+
   if (report.score && report.score.score != null) {
     lines.push(`${c.bold}Overall health  ${c.reset}${gradeColor(c, report.score.grade)} ${report.score.grade} (${report.score.score}/100)${c.reset}`);
   }
@@ -222,6 +231,18 @@ export function renderMarkdown(report) {
   L.push("");
   L.push(`> status \`${report.meta.status}\` · ${report.meta.bytes} bytes · ${report.meta.elapsedMs}ms · generated ${report.meta.generatedAt}`);
   L.push("");
+
+  const mdChain = report.meta.redirectChain || [];
+  if (mdChain.length) {
+    L.push(`## ↪️ Redirect chain (${mdChain.length} hop${mdChain.length > 1 ? "s" : ""})`);
+    L.push("| Status | To | Note |");
+    L.push("|---|---|---|");
+    for (const hop of mdChain) {
+      const note = [hop.downgrade && "⚠️ https → http", hop.crossHost && "cross-host"].filter(Boolean).join(", ");
+      L.push(`| ${hop.status} | \`${hop.to}\` | ${note || "—"} |`);
+    }
+    L.push("");
+  }
 
   if (report.score && report.score.score != null) {
     L.push(`## Overall health — ${report.score.grade} (${report.score.score}/100)`);
@@ -496,6 +517,16 @@ export function renderHtml(report) {
     ${checkList(cr.checks)}
   </div>` : "";
 
+  const htmlChain = report.meta.redirectChain || [];
+  const chainSection = htmlChain.length ? `
+  <h2>↪️ Redirect chain (${htmlChain.length})</h2>
+  <div class="card"><table><tr><th>Status</th><th>To</th><th>Note</th></tr>
+    ${htmlChain.map((hop) => {
+      const note = [hop.downgrade && "⚠️ https → http", hop.crossHost && "cross-host"].filter(Boolean).join(", ");
+      return `<tr><td>${hop.status}</td><td>${esc(hop.to)}</td><td class="dim">${esc(note || "—")}</td></tr>`;
+    }).join("")}
+  </table></div>` : "";
+
   const csp = report.headers.csp;
   const cspSection = csp ? `
   <h3>Content-Security-Policy — ${csp.count} directives${csp.strict ? " (strict)" : ""}</h3>
@@ -567,6 +598,7 @@ ${REPORT_CSS}</style></head>
   ${perfSection}
   ${crawlSection}
   ${infraSection}
+  ${chainSection}
   ${tlsSection}
   ${dnsSection}
   ${portsSection}

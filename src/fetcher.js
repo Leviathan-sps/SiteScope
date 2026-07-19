@@ -11,6 +11,25 @@ export function normalizeUrl(input) {
   return new URL(url).toString();
 }
 
+// same ceiling browsers use, so a redirect loop fails instead of hanging
+const MAX_REDIRECTS = 20;
+
+const isRedirect = (status) => status >= 300 && status < 400;
+
+// one hop, plus the two things about a hop that actually matter
+function hopInfo(from, to, status) {
+  let fromUrl, toUrl;
+  try { fromUrl = new URL(from); toUrl = new URL(to); } catch { return { from, to, status }; }
+  return {
+    from,
+    to,
+    status,
+    // https -> http. anything sent on the next request is in the clear.
+    downgrade: fromUrl.protocol === "https:" && toUrl.protocol === "http:",
+    crossHost: fromUrl.host !== toUrl.host,
+  };
+}
+
 // fetch a page (following redirects) and collect what the analyzers need.
 // uses global fetch (node 18+), no third-party deps
 export async function fetchSite(input, opts = {}) {
@@ -22,17 +41,36 @@ export async function fetchSite(input, opts = {}) {
   const startedAt = nowMs();
 
   try {
-    const res = await fetch(requestedUrl, {
-      method: "GET",
-      redirect: "follow",
-      signal: controller.signal,
-      headers: {
-        "user-agent": userAgent,
-        accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "accept-language": "en-US,en;q=0.9",
-      },
-    });
+    // follow redirects by hand so each hop can be recorded. "follow" hides
+    // the chain entirely, and the hops are where downgrades and surprise
+    // cross-domain jumps show up.
+    const chain = [];
+    let currentUrl = requestedUrl;
+    let res;
+
+    for (let hop = 0; ; hop++) {
+      if (hop > MAX_REDIRECTS) throw new Error(`Too many redirects (>${MAX_REDIRECTS}): ${requestedUrl}`);
+      res = await fetch(currentUrl, {
+        method: "GET",
+        redirect: "manual",
+        signal: controller.signal,
+        headers: {
+          "user-agent": userAgent,
+          accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "accept-language": "en-US,en;q=0.9",
+        },
+      });
+
+      const location = res.headers.get("location");
+      if (!isRedirect(res.status) || !location) break;
+
+      let next;
+      try { next = new URL(location, currentUrl).toString(); }
+      catch { break; } // malformed Location — treat this as the final stop
+      chain.push(hopInfo(currentUrl, next, res.status));
+      currentUrl = next;
+    }
 
     const body = await res.text();
     const elapsedMs = Math.round(nowMs() - startedAt);
@@ -50,8 +88,11 @@ export async function fetchSite(input, opts = {}) {
 
     return {
       requestedUrl,
-      finalUrl: res.url || requestedUrl,
-      redirected: res.redirected || res.url !== requestedUrl,
+      finalUrl: currentUrl,
+      redirected: chain.length > 0,
+      redirectChain: chain,
+      // a downgrade anywhere in the chain means credentials rode over http
+      insecureHop: chain.some((h) => h.downgrade),
       status: res.status,
       statusText: res.statusText,
       ok: res.ok,
